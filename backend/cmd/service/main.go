@@ -20,11 +20,17 @@ func main() {
 		AllowMethods: []string{echo.GET},
 	}))
 
-	repo := repository.NewUserRepository()
-	uc := usecase.NewUserUseCase(repo)
-	handler := http.NewHandler(uc)
+	// User setup
+	userRepo := repository.NewUserRepository()
+	userUC := usecase.NewUserUseCase(userRepo)
+	userHandler := http.NewUserHandler(userUC)
+	userHandler.RegisterRoutes(e)
 
-	handler.RegisterRoutes(e)
+	// Product setup
+	productRepo := repository.NewProductRepository()
+	productUC := usecase.NewProductUseCase(productRepo)
+	productHandler := http.NewProductHandler(productUC)
+	productHandler.RegisterRoutes(e)
 
 	log.Println("Server running on :8080")
 	if err := e.Start(":8080"); err != nil {
