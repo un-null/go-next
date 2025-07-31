@@ -5,7 +5,7 @@ import (
 )
 
 type UserRepository interface {
-	FindAll() []entity.User
+	FindAllUser() []entity.User
 }
 
 type userRepository struct{}
@@ -14,7 +14,7 @@ func NewUserRepository() UserRepository {
 	return &userRepository{}
 }
 
-func (r *userRepository) FindAll() []entity.User {
+func (r *userRepository) FindAllUser() []entity.User {
 	// Simulate DB with in-memory data
 	return []entity.User{
 		{ID: 1, Name: "Alice"},

@@ -14,5 +14,5 @@ func NewUserUseCase(r repository.UserRepository) *UserUseCase {
 }
 
 func (u *UserUseCase) ListUsers() []entity.User {
-	return u.repo.FindAll()
+	return u.repo.FindAllUser()
 }
