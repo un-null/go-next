@@ -13,7 +13,7 @@ func NewProductUseCase(r repository.ProductRepository) *ProductUseCase {
 	return &ProductUseCase{repo: r}
 }
 
-func (u *ProductUseCase) ListProducts() []entity.Product {
+func (u *ProductUseCase) GetAllProducts() []entity.Product {
 	return u.repo.GetAllProducts()
 }
 

@@ -23,7 +23,7 @@ func (h *ProductHandler) RegisterRoutes(g *echo.Group) {
 }
 
 func (h *ProductHandler) GetProducts(c echo.Context) error {
-	products := h.productUseCase.ListProducts()
+	products := h.productUseCase.GetAllProducts()
 	return c.JSON(http.StatusOK, products)
 }
 
