@@ -17,7 +17,7 @@ func NewProductRepository() ProductRepository {
 	return &productRepository{
 		products: []entity.Product{
 			{ID: 1, Name: "Apple", Price: 1.2, Quantity: 3},
-			{ID: 2, Name: "Banana", Price: 0.8, Quantity: 2},
+			{ID: 2, Name: "Banana", Price: 0.8, Quantity: 0},
 		},
 	}
 }
