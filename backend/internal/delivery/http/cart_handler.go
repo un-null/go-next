@@ -16,11 +16,11 @@ func NewCartHandler(uc *usecase.CartUseCase) *CartHandler {
 	return &CartHandler{usecase: uc}
 }
 
-func (h *CartHandler) RegisterRoutes(e *echo.Echo) {
-	e.POST("/cart", h.AddToCart)
-	e.GET("/cart", h.GetCartItems)
-	e.DELETE("/cart", h.RemoveFromCart)
-	e.DELETE("/cart/clear", h.ClearCart)
+func (h *CartHandler) RegisterRoutes(g *echo.Group) {
+	g.POST("/cart", h.AddToCart)
+	g.GET("/cart", h.GetCartItems)
+	g.DELETE("/cart", h.RemoveFromCart)
+	g.DELETE("/cart/clear", h.ClearCart)
 }
 
 func (h *CartHandler) AddToCart(c echo.Context) error {

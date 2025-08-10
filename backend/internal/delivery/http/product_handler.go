@@ -16,8 +16,8 @@ func NewProductHandler(uc *usecase.ProductUseCase) *ProductHandler {
 	return &ProductHandler{productUseCase: uc}
 }
 
-func (h *ProductHandler) RegisterRoutes(e *echo.Echo) {
-	e.GET("/products", h.GetProducts)
+func (h *ProductHandler) RegisterRoutes(g *echo.Group) {
+	g.GET("/products", h.GetProducts)
 }
 
 func (h *ProductHandler) GetProducts(c echo.Context) error {
