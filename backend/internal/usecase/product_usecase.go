@@ -16,3 +16,7 @@ func NewProductUseCase(r repository.ProductRepository) *ProductUseCase {
 func (u *ProductUseCase) ListProducts() []entity.Product {
 	return u.repo.GetAllProducts()
 }
+
+func (u *ProductUseCase) GetProductById(id int) entity.Product {
+	return u.repo.GetProductById(id)
+}
