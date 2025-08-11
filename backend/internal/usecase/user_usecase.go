@@ -15,16 +15,20 @@ func NewUserUseCase(r repository.UserRepository) *UserUseCase {
 	return &UserUseCase{repo: r}
 }
 
-func (u *UserUseCase) ListUsers() []entity.User {
-	return u.repo.FindAllUser()
+func (u *UserUseCase) GetAllUsers() []entity.User {
+	return u.repo.GetAllUsers()
+}
+
+func (u *UserUseCase) GetUserById(id int) entity.User {
+	return u.repo.GetUserById(id)
 }
 
 func (u *UserUseCase) SignUp(user entity.User) error {
 	return u.repo.CreateUser(user)
 }
 
-func (u *UserUseCase) Login(name, password string) (*entity.User, error) {
-	user, err := u.repo.FindByName(name)
+func (u *UserUseCase) Login(email, password string) (*entity.User, error) {
+	user, err := u.repo.GetUserByEmail(email)
 	if err != nil {
 		return nil, err
 	}

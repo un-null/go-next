@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"backend/internal/entity"
@@ -20,19 +21,38 @@ func NewUserHandler(uc *usecase.UserUseCase, jwtSecret string) *UserHandler {
 	return &UserHandler{userUseCase: uc, jwtSecret: jwtSecret}
 }
 
-func (h *UserHandler) GetUsers(c echo.Context) error {
-	users := h.userUseCase.ListUsers()
+func (h *UserHandler) GetAllUsers(c echo.Context) error {
+	users := h.userUseCase.GetAllUsers()
 	return c.JSON(http.StatusOK, users)
 }
 
+func (h *UserHandler) GetUserById(c echo.Context) error {
+	idParam := c.Param("id")
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+	}
+
+	user := h.userUseCase.GetUserById(id)
+
+	if user.ID == 0 {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
+	}
+
+	return c.JSON(http.StatusOK, user)
+}
+
 func (h *UserHandler) RegisterRoutes(g *echo.Group) {
-	g.GET("/users", h.GetUsers)
+	g.GET("/users", h.GetAllUsers)
+	g.GET("/users/:id", h.GetUserById)
 	g.POST("/signup", h.SignUp)
 	g.POST("/login", h.Login)
 }
 
 type signupRequest struct {
 	Name     string `json:"name" validate:"required,min=3"`
+	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"`
 }
 
@@ -47,6 +67,7 @@ func (h *UserHandler) SignUp(c echo.Context) error {
 
 	err := h.userUseCase.SignUp(entity.User{
 		Name:     req.Name,
+		Email:    req.Email,
 		Password: req.Password,
 	})
 	if err != nil {
@@ -57,7 +78,7 @@ func (h *UserHandler) SignUp(c echo.Context) error {
 }
 
 type loginRequest struct {
-	Name     string `json:"name" validate:"required"`
+	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
 
@@ -70,7 +91,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	user, err := h.userUseCase.Login(req.Name, req.Password)
+	user, err := h.userUseCase.Login(req.Email, req.Password)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
 	}

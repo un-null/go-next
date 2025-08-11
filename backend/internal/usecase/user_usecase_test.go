@@ -12,7 +12,7 @@ func TestListUsers(t *testing.T) {
 	repo := repository.NewUserRepository()
 	uc := NewUserUseCase(repo)
 
-	users := uc.ListUsers()
+	users := uc.GetAllUsers()
 	if len(users) != 1 {
 		t.Fatalf("expected 1 user, got %d", len(users))
 	}
@@ -21,21 +21,49 @@ func TestListUsers(t *testing.T) {
 	}
 }
 
+func TestGetUserById_Found(t *testing.T) {
+	repo := repository.NewUserRepository()
+	uc := NewUserUseCase(repo)
+
+	product := uc.GetUserById(1)
+	if product.ID == 0 {
+		t.Fatalf("expected to find product with ID 1, got zero value")
+	}
+
+	if product.Name != "Alice" {
+		t.Errorf("expected product name 'Apple', got '%s'", product.Name)
+	}
+}
+
+func TestGetUserById_NotFound(t *testing.T) {
+	repo := repository.NewUserRepository()
+	uc := NewUserUseCase(repo)
+
+	product := uc.GetUserById(99)
+	if product.ID != 0 {
+		t.Errorf("expected zero value product for non-existing ID, got %+v", product)
+	}
+}
+
 func TestSignUp_Success(t *testing.T) {
 	repo := repository.NewUserRepository()
 	uc := NewUserUseCase(repo)
 
-	err := uc.SignUp(entity.User{Name: "Bob", Password: "secret"})
+	err := uc.SignUp(entity.User{
+		Name:     "Bob",
+		Email:    "bob@example.com",
+		Password: "secret",
+	})
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	// Verify Bob exists
-	user, err := repo.FindByName("Bob")
+	// Verify Bob exists by email
+	user, err := repo.GetUserByEmail("bob@example.com")
 	if err != nil {
 		t.Fatalf("expected user found, got error %v", err)
 	}
-	// Verify password is hashed correctly
+
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("secret")) != nil {
 		t.Errorf("password hash mismatch")
 	}
