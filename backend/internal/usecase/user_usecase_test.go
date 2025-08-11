@@ -49,17 +49,21 @@ func TestSignUp_Success(t *testing.T) {
 	repo := repository.NewUserRepository()
 	uc := NewUserUseCase(repo)
 
-	err := uc.SignUp(entity.User{Name: "Bob", Password: "secret"})
+	err := uc.SignUp(entity.User{
+		Name:     "Bob",
+		Email:    "bob@example.com",
+		Password: "secret",
+	})
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	// Verify Bob exists
-	user, err := repo.FindByName("Bob")
+	// Verify Bob exists by email
+	user, err := repo.GetUserByEmail("bob@example.com")
 	if err != nil {
 		t.Fatalf("expected user found, got error %v", err)
 	}
-	// Verify password is hashed correctly
+
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("secret")) != nil {
 		t.Errorf("password hash mismatch")
 	}

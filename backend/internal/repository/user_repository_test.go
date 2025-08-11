@@ -48,7 +48,7 @@ func TestGetUserById_NotFound(t *testing.T) {
 func TestFindByName_Found(t *testing.T) {
 	repo := NewUserRepository()
 
-	user, err := repo.FindByName("Alice")
+	user, err := repo.GetUserByEmail("alice@example.com")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -60,7 +60,7 @@ func TestFindByName_Found(t *testing.T) {
 func TestFindByName_NotFound(t *testing.T) {
 	repo := NewUserRepository()
 
-	_, err := repo.FindByName("Bob")
+	_, err := repo.GetUserByEmail("bob@example.com")
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
@@ -69,27 +69,37 @@ func TestFindByName_NotFound(t *testing.T) {
 func TestCreateUser_Success(t *testing.T) {
 	repo := NewUserRepository()
 
-	err := repo.CreateUser(entity.User{Name: "Bob", Password: "secret"})
+	err := repo.CreateUser(entity.User{
+		Name:     "Bob",
+		Email:    "bob@example.com",
+		Password: "secret",
+	})
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	// Verify Bob exists now
-	user, err := repo.FindByName("Bob")
+	user, err := repo.GetUserByEmail("bob@example.com")
 	if err != nil {
 		t.Fatalf("expected user found, got error %v", err)
 	}
 
-	// Password should be hashed
+	if user.Name != "Bob" {
+		t.Errorf("expected name 'Bob', got '%s'", user.Name)
+	}
+
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("secret")) != nil {
 		t.Errorf("password hash does not match")
+	}
+
+	if user.CreatedAt.IsZero() || user.UpdatedAt.IsZero() {
+		t.Errorf("expected timestamps to be set")
 	}
 }
 
 func TestCreateUser_Duplicate(t *testing.T) {
 	repo := NewUserRepository()
 
-	err := repo.CreateUser(entity.User{Name: "Alice", Password: "secret"})
+	err := repo.CreateUser(entity.User{Name: "Alice", Email: "alice@example.com", Password: "secret"})
 	if err == nil {
 		t.Errorf("expected error for duplicate user, got nil")
 	}

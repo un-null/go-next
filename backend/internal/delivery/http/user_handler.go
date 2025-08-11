@@ -52,6 +52,7 @@ func (h *UserHandler) RegisterRoutes(g *echo.Group) {
 
 type signupRequest struct {
 	Name     string `json:"name" validate:"required,min=3"`
+	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"`
 }
 
@@ -66,6 +67,7 @@ func (h *UserHandler) SignUp(c echo.Context) error {
 
 	err := h.userUseCase.SignUp(entity.User{
 		Name:     req.Name,
+		Email:    req.Email,
 		Password: req.Password,
 	})
 	if err != nil {
@@ -76,7 +78,7 @@ func (h *UserHandler) SignUp(c echo.Context) error {
 }
 
 type loginRequest struct {
-	Name     string `json:"name" validate:"required"`
+	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
 
@@ -89,7 +91,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	user, err := h.userUseCase.Login(req.Name, req.Password)
+	user, err := h.userUseCase.Login(req.Email, req.Password)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
 	}
