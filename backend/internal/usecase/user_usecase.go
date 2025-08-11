@@ -16,7 +16,7 @@ func NewUserUseCase(r repository.UserRepository) *UserUseCase {
 }
 
 func (u *UserUseCase) ListUsers() []entity.User {
-	return u.repo.FindAllUser()
+	return u.repo.GetAllUsers()
 }
 
 func (u *UserUseCase) SignUp(user entity.User) error {

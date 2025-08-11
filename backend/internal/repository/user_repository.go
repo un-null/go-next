@@ -8,7 +8,7 @@ import (
 )
 
 type UserRepository interface {
-	FindAllUser() []entity.User
+	GetAllUsers() []entity.User
 	FindByName(name string) (*entity.User, error)
 	CreateUser(user entity.User) error
 }
@@ -25,7 +25,7 @@ func NewUserRepository() UserRepository {
 	}
 }
 
-func (r *userRepository) FindAllUser() []entity.User {
+func (r *userRepository) GetAllUsers() []entity.User {
 	return r.users
 }
 

@@ -7,10 +7,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func TestFindAllUser(t *testing.T) {
+func TestGetAllUsers(t *testing.T) {
 	repo := NewUserRepository()
 
-	users := repo.FindAllUser()
+	users := repo.GetAllUsers()
 	if len(users) != 1 {
 		t.Fatalf("expected 1 user, got %d", len(users))
 	}
