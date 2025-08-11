@@ -12,12 +12,36 @@ func TestListUsers(t *testing.T) {
 	repo := repository.NewUserRepository()
 	uc := NewUserUseCase(repo)
 
-	users := uc.ListUsers()
+	users := uc.GetAllUsers()
 	if len(users) != 1 {
 		t.Fatalf("expected 1 user, got %d", len(users))
 	}
 	if users[0].Name != "Alice" {
 		t.Errorf("expected Alice, got %s", users[0].Name)
+	}
+}
+
+func TestGetUserById_Found(t *testing.T) {
+	repo := repository.NewUserRepository()
+	uc := NewUserUseCase(repo)
+
+	product := uc.GetUserById(1)
+	if product.ID == 0 {
+		t.Fatalf("expected to find product with ID 1, got zero value")
+	}
+
+	if product.Name != "Alice" {
+		t.Errorf("expected product name 'Apple', got '%s'", product.Name)
+	}
+}
+
+func TestGetUserById_NotFound(t *testing.T) {
+	repo := repository.NewUserRepository()
+	uc := NewUserUseCase(repo)
+
+	product := uc.GetUserById(99)
+	if product.ID != 0 {
+		t.Errorf("expected zero value product for non-existing ID, got %+v", product)
 	}
 }
 

@@ -70,7 +70,8 @@ func main() {
 	// Protected endpoints
 	protected := api.Group("")
 	protected.Use(authMiddleware.Middleware)
-	protected.GET("/users", userHandler.GetUsers)
+	protected.GET("/users", userHandler.GetAllUsers)
+	protected.GET("/users/:id", userHandler.GetUserById)
 	cartHandler.RegisterRoutes(protected)
 
 	log.Println("Server running on :8080")

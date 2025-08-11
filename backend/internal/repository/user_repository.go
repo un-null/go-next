@@ -9,6 +9,7 @@ import (
 
 type UserRepository interface {
 	GetAllUsers() []entity.User
+	GetUserById(id int) entity.User
 	FindByName(name string) (*entity.User, error)
 	CreateUser(user entity.User) error
 }
@@ -27,6 +28,16 @@ func NewUserRepository() UserRepository {
 
 func (r *userRepository) GetAllUsers() []entity.User {
 	return r.users
+}
+
+func (r *userRepository) GetUserById(id int) entity.User {
+	for _, u := range r.users {
+		if u.ID == id {
+			return u
+		}
+	}
+
+	return entity.User{}
 }
 
 func (r *userRepository) FindByName(name string) (*entity.User, error) {

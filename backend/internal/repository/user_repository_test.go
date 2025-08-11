@@ -19,6 +19,32 @@ func TestGetAllUsers(t *testing.T) {
 	}
 }
 
+func TestGetUserById_Found(t *testing.T) {
+	repo := NewUserRepository()
+
+	user := repo.GetUserById(1)
+	if user.ID == 0 {
+		t.Fatalf("expected to find user with ID 1, got zero value")
+	}
+
+	if user.Name != "Alice" {
+		t.Errorf("expected user name 'Alice', got '%s'", user.Name)
+	}
+}
+
+func TestGetUserById_NotFound(t *testing.T) {
+	repo := NewUserRepository()
+
+	user := repo.GetUserById(99)
+	if user.ID != 0 {
+		t.Fatalf("expected zero value user for not found, got ID %d", user.ID)
+	}
+
+	if user.Name != "" {
+		t.Errorf("expected empty name for not found, got '%s'", user.Name)
+	}
+}
+
 func TestFindByName_Found(t *testing.T) {
 	repo := NewUserRepository()
 
