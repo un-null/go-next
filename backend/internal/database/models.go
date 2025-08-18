@@ -168,7 +168,6 @@ type Product struct {
 	Price         pgtype.Numeric     `db:"price" json:"price"`
 	StockQuantity int32              `db:"stock_quantity" json:"stock_quantity"`
 	ImageUrl      pgtype.Text        `db:"image_url" json:"image_url"`
-	IsActive      pgtype.Bool        `db:"is_active" json:"is_active"`
 	AverageRating pgtype.Numeric     `db:"average_rating" json:"average_rating"`
 	TotalComments pgtype.Int4        `db:"total_comments" json:"total_comments"`
 	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`
