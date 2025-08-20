@@ -35,12 +35,12 @@ func (a *AuthMiddleware) Middleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.ErrUnauthorized
 		}
 
-		userID, ok := claims["user_id"].(float64)
+		userID, ok := claims["user_id"].(string)
 		if !ok {
 			return echo.ErrUnauthorized
 		}
 
-		c.Set("userID", int(userID))
+		c.Set("userID", userID)
 		return next(c)
 	}
 }

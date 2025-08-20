@@ -87,10 +87,11 @@ func main() {
 	// Protected endpoints
 	protected := api.Group("")
 	protected.Use(authMiddleware.Middleware)
-	protected.PATCH("/users/:id/name", userHandler.UpdateUserName)     // Update name
-	protected.PATCH("/users/:id/email", userHandler.UpdateUserEmail)   // Update email
-	protected.PATCH("/users/:id/password", userHandler.ChangePassword) // Change password
-	protected.PATCH("/users/:id/coins", userHandler.UpdateUserCoins)   // Update coins
+	protected.GET("/users/:id", userHandler.GetUserById)
+	protected.PATCH("/users/:id/name", userHandler.UpdateUserName)
+	protected.PATCH("/users/:id/email", userHandler.UpdateUserEmail)
+	protected.PATCH("/users/:id/password", userHandler.ChangePassword)
+	protected.PATCH("/users/:id/coins", userHandler.UpdateUserCoins)
 	protected.DELETE("/users/:id", userHandler.DeleteUser)
 
 	cartHandler.RegisterRoutes(protected)
