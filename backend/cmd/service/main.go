@@ -56,7 +56,7 @@ func main() {
 	// DI
 	authMiddleware := http.NewAuthMiddleware(jwtSecret)
 
-	userRepo := repository.NewUserRepository()
+	userRepo := repository.NewUserRepository(queries)
 	userUC := usecase.NewUserUseCase(userRepo)
 
 	productRepo := repository.NewProductRepository(queries)
@@ -87,8 +87,12 @@ func main() {
 	// Protected endpoints
 	protected := api.Group("")
 	protected.Use(authMiddleware.Middleware)
-	protected.GET("/users", userHandler.GetAllUsers)
-	protected.GET("/users/:id", userHandler.GetUserById)
+	protected.PATCH("/users/:id/name", userHandler.UpdateUserName)     // Update name
+	protected.PATCH("/users/:id/email", userHandler.UpdateUserEmail)   // Update email
+	protected.PATCH("/users/:id/password", userHandler.ChangePassword) // Change password
+	protected.PATCH("/users/:id/coins", userHandler.UpdateUserCoins)   // Update coins
+	protected.DELETE("/users/:id", userHandler.DeleteUser)
+
 	cartHandler.RegisterRoutes(protected)
 
 	log.Println("Server running on :8080")
