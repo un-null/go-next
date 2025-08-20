@@ -1,9 +1,11 @@
 package main
 
 import (
+	"backend/internal/database"
 	"backend/internal/delivery/http"
 	"backend/internal/repository"
 	"backend/internal/usecase"
+	"context"
 	"log"
 	"os"
 
@@ -29,6 +31,16 @@ func main() {
 		log.Fatal("JWT_SECRET is not set")
 	}
 
+	ctx := context.Background()
+
+	dbService, err := database.NewService(ctx, os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+	defer dbService.Close()
+
+	queries := dbService.Queries()
+
 	e := echo.New()
 
 	e.Validator = &CustomValidator{validator: validator.New()}
@@ -47,15 +59,19 @@ func main() {
 	userRepo := repository.NewUserRepository()
 	userUC := usecase.NewUserUseCase(userRepo)
 
-	productRepo := repository.NewProductRepository()
+	productRepo := repository.NewProductRepository(queries)
 	productUC := usecase.NewProductUseCase(productRepo)
 
 	cartRepo := repository.NewCartRepository()
 	cartUC := usecase.NewCartUseCase(cartRepo)
 
+	categoryRepo := repository.NewCategoryRepository(queries)
+	categoryUC := usecase.NewCategoryUseCase(categoryRepo)
+
 	userHandler := http.NewUserHandler(userUC, jwtSecret)
 	productHandler := http.NewProductHandler(productUC)
 	cartHandler := http.NewCartHandler(cartUC)
+	categoryHandler := http.NewCategoryHandler(categoryUC)
 
 	// Route groupin
 
@@ -66,6 +82,7 @@ func main() {
 	public.POST("/signup", userHandler.SignUp)
 	public.POST("/login", userHandler.Login)
 	productHandler.RegisterRoutes(api)
+	categoryHandler.RegisterRoutes(api)
 
 	// Protected endpoints
 	protected := api.Group("")
