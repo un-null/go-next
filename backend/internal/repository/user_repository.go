@@ -121,7 +121,7 @@ func (r *userRepository) CreateUser(ctx context.Context, req entity.CreateUserRe
 		Name:         req.Name,
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
-		Coins:        int32ToPgtype(int32(req.Coins)),
+		Coins:        int32ToPgtype(1000),
 	})
 	if err != nil {
 		return nil, err
