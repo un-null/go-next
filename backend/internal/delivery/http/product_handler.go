@@ -19,25 +19,45 @@ func NewProductHandler(uc *usecase.ProductUseCase) *ProductHandler {
 
 func (h *ProductHandler) RegisterRoutes(g *echo.Group) {
 	g.GET("/products", h.GetProducts)
-	g.GET("/products/:id", h.GetProductById)
+	g.GET("/products/:id", h.GetProductByID)
 }
 
 func (h *ProductHandler) GetProducts(c echo.Context) error {
-	products := h.productUseCase.GetAllProducts()
+	ctx := c.Request().Context()
+
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(c.QueryParam("limit"))
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	products, err := h.productUseCase.GetAllProducts(ctx, page, limit)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
 	return c.JSON(http.StatusOK, products)
 }
 
-func (h *ProductHandler) GetProductById(c echo.Context) error {
-	idParam := c.Param("id")
+func (h *ProductHandler) GetProductByID(c echo.Context) error {
+	ctx := c.Request().Context()
 
+	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid product id"})
 	}
 
-	product := h.productUseCase.GetProductById(id)
+	product, err := h.productUseCase.GetProductByID(ctx, id)
 
-	if product.ID == 0 {
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	if product == nil {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "product not found"})
 	}
 
