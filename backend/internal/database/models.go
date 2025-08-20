@@ -108,14 +108,8 @@ type CartItem struct {
 }
 
 type Category struct {
-	ID          int32              `db:"id" json:"id"`
-	Name        string             `db:"name" json:"name"`
-	Description pgtype.Text        `db:"description" json:"description"`
-	ImageUrl    pgtype.Text        `db:"image_url" json:"image_url"`
-	IsActive    pgtype.Bool        `db:"is_active" json:"is_active"`
-	SortOrder   pgtype.Int4        `db:"sort_order" json:"sort_order"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	ID   int32  `db:"id" json:"id"`
+	Name string `db:"name" json:"name"`
 }
 
 type CoinTransaction struct {
@@ -168,7 +162,6 @@ type Product struct {
 	Price         pgtype.Numeric     `db:"price" json:"price"`
 	StockQuantity int32              `db:"stock_quantity" json:"stock_quantity"`
 	ImageUrl      pgtype.Text        `db:"image_url" json:"image_url"`
-	IsActive      pgtype.Bool        `db:"is_active" json:"is_active"`
 	AverageRating pgtype.Numeric     `db:"average_rating" json:"average_rating"`
 	TotalComments pgtype.Int4        `db:"total_comments" json:"total_comments"`
 	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`

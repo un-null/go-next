@@ -10,6 +10,12 @@ import (
 
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	GetAllCategories(ctx context.Context) ([]Category, error)
+	GetCategoryByID(ctx context.Context, id int32) (Category, error)
+	GetProductByID(ctx context.Context, id int32) (Product, error)
+	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
+	ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error)
+	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error)
 }
 
 var _ Querier = (*Queries)(nil)
