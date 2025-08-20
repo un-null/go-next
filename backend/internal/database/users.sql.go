@@ -23,8 +23,9 @@ func (q *Queries) CheckEmailExists(ctx context.Context, email string) (bool, err
 }
 
 const createUser = `-- name: CreateUser :one
+
 INSERT INTO users (name, email, password_hash, coins)
-VALUES ($1, $2, $3, COALESCE($4, 0))
+VALUES ($1, $2, $3, $4)
 RETURNING id, name, email, coins, created_at, updated_at
 `
 
@@ -32,7 +33,7 @@ type CreateUserParams struct {
 	Name         string      `db:"name" json:"name"`
 	Email        string      `db:"email" json:"email"`
 	PasswordHash string      `db:"password_hash" json:"password_hash"`
-	Column4      interface{} `db:"column_4" json:"column_4"`
+	Coins        pgtype.Int4 `db:"coins" json:"coins"`
 }
 
 type CreateUserRow struct {
@@ -44,12 +45,13 @@ type CreateUserRow struct {
 	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
+// queries/user.sql
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.Name,
 		arg.Email,
 		arg.PasswordHash,
-		arg.Column4,
+		arg.Coins,
 	)
 	var i CreateUserRow
 	err := row.Scan(
@@ -115,70 +117,11 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	return i, err
 }
 
-const getUserCount = `-- name: GetUserCount :one
-SELECT COUNT(*) FROM users
-`
-
-func (q *Queries) GetUserCount(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, getUserCount)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const listUsers = `-- name: ListUsers :many
-SELECT id, name, email, coins, created_at, updated_at
-FROM users
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
-`
-
-type ListUsersParams struct {
-	Limit  int32 `db:"limit" json:"limit"`
-	Offset int32 `db:"offset" json:"offset"`
-}
-
-type ListUsersRow struct {
-	ID        pgtype.UUID        `db:"id" json:"id"`
-	Name      string             `db:"name" json:"name"`
-	Email     string             `db:"email" json:"email"`
-	Coins     pgtype.Int4        `db:"coins" json:"coins"`
-	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-}
-
-func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error) {
-	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListUsersRow
-	for rows.Next() {
-		var i ListUsersRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Email,
-			&i.Coins,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET 
-    name = COALESCE($2, name),
-    email = COALESCE($3, email),
+    name = COALESCE(NULLIF($2, ''), name),
+    email = COALESCE(NULLIF($3, ''), email),
     coins = COALESCE($4, coins),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
@@ -186,10 +129,10 @@ RETURNING id, name, email, coins, created_at, updated_at
 `
 
 type UpdateUserParams struct {
-	ID    pgtype.UUID `db:"id" json:"id"`
-	Name  string      `db:"name" json:"name"`
-	Email string      `db:"email" json:"email"`
-	Coins pgtype.Int4 `db:"coins" json:"coins"`
+	ID      pgtype.UUID `db:"id" json:"id"`
+	Column2 interface{} `db:"column_2" json:"column_2"`
+	Column3 interface{} `db:"column_3" json:"column_3"`
+	Coins   pgtype.Int4 `db:"coins" json:"coins"`
 }
 
 type UpdateUserRow struct {
@@ -204,8 +147,8 @@ type UpdateUserRow struct {
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.ID,
-		arg.Name,
-		arg.Email,
+		arg.Column2,
+		arg.Column3,
 		arg.Coins,
 	)
 	var i UpdateUserRow
