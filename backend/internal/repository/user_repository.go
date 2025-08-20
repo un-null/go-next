@@ -18,8 +18,10 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, req entity.CreateUserRequest) (*entity.User, error)
 	UpdateUserName(ctx context.Context, id uuid.UUID, name string) (*entity.User, error)
 	UpdateUserEmail(ctx context.Context, id uuid.UUID, email string) (*entity.User, error)
+	UpdateUserPassword(ctx context.Context, id uuid.UUID, newPassword string) error
 	UpdateUserCoins(ctx context.Context, id uuid.UUID, coinsDelta int) (*entity.User, error)
 	CheckEmailExists(ctx context.Context, email string) (bool, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
 }
 
 type userRepository struct {
@@ -32,7 +34,6 @@ func NewUserRepository(queries *database.Queries) UserRepository {
 	}
 }
 
-// Helper functions for type conversion
 func uuidToPgtype(id uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{
 		Bytes: id,
