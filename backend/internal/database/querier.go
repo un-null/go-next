@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CheckEmailExists(ctx context.Context, email string) (bool, error)
+	CheckEmailExistsForOtherUser(ctx context.Context, arg CheckEmailExistsForOtherUserParams) (bool, error)
 	// queries/user.sql
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
@@ -23,8 +24,9 @@ type Querier interface {
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error)
-	UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error)
 	UpdateUserCoins(ctx context.Context, arg UpdateUserCoinsParams) (UpdateUserCoinsRow, error)
+	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (UpdateUserEmailRow, error)
+	UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (UpdateUserNameRow, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }
 

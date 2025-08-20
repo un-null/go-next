@@ -22,6 +22,22 @@ func (q *Queries) CheckEmailExists(ctx context.Context, email string) (bool, err
 	return exists, err
 }
 
+const checkEmailExistsForOtherUser = `-- name: CheckEmailExistsForOtherUser :one
+SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND id != $2)
+`
+
+type CheckEmailExistsForOtherUserParams struct {
+	Email string      `db:"email" json:"email"`
+	ID    pgtype.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) CheckEmailExistsForOtherUser(ctx context.Context, arg CheckEmailExistsForOtherUserParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkEmailExistsForOtherUser, arg.Email, arg.ID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createUser = `-- name: CreateUser :one
 
 INSERT INTO users (name, email, password_hash, coins)
@@ -117,52 +133,6 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	return i, err
 }
 
-const updateUser = `-- name: UpdateUser :one
-UPDATE users
-SET 
-    name = COALESCE(NULLIF($2, ''), name),
-    email = COALESCE(NULLIF($3, ''), email),
-    coins = COALESCE($4, coins),
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
-RETURNING id, name, email, coins, created_at, updated_at
-`
-
-type UpdateUserParams struct {
-	ID      pgtype.UUID `db:"id" json:"id"`
-	Column2 interface{} `db:"column_2" json:"column_2"`
-	Column3 interface{} `db:"column_3" json:"column_3"`
-	Coins   pgtype.Int4 `db:"coins" json:"coins"`
-}
-
-type UpdateUserRow struct {
-	ID        pgtype.UUID        `db:"id" json:"id"`
-	Name      string             `db:"name" json:"name"`
-	Email     string             `db:"email" json:"email"`
-	Coins     pgtype.Int4        `db:"coins" json:"coins"`
-	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-}
-
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
-	row := q.db.QueryRow(ctx, updateUser,
-		arg.ID,
-		arg.Column2,
-		arg.Column3,
-		arg.Coins,
-	)
-	var i UpdateUserRow
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Email,
-		&i.Coins,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const updateUserCoins = `-- name: UpdateUserCoins :one
 UPDATE users
 SET 
@@ -189,6 +159,80 @@ type UpdateUserCoinsRow struct {
 func (q *Queries) UpdateUserCoins(ctx context.Context, arg UpdateUserCoinsParams) (UpdateUserCoinsRow, error) {
 	row := q.db.QueryRow(ctx, updateUserCoins, arg.ID, arg.Coins)
 	var i UpdateUserCoinsRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Coins,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserEmail = `-- name: UpdateUserEmail :one
+UPDATE users
+SET 
+    email = $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, name, email, coins, created_at, updated_at
+`
+
+type UpdateUserEmailParams struct {
+	ID    pgtype.UUID `db:"id" json:"id"`
+	Email string      `db:"email" json:"email"`
+}
+
+type UpdateUserEmailRow struct {
+	ID        pgtype.UUID        `db:"id" json:"id"`
+	Name      string             `db:"name" json:"name"`
+	Email     string             `db:"email" json:"email"`
+	Coins     pgtype.Int4        `db:"coins" json:"coins"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (UpdateUserEmailRow, error) {
+	row := q.db.QueryRow(ctx, updateUserEmail, arg.ID, arg.Email)
+	var i UpdateUserEmailRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Coins,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserName = `-- name: UpdateUserName :one
+UPDATE users
+SET 
+    name = $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, name, email, coins, created_at, updated_at
+`
+
+type UpdateUserNameParams struct {
+	ID   pgtype.UUID `db:"id" json:"id"`
+	Name string      `db:"name" json:"name"`
+}
+
+type UpdateUserNameRow struct {
+	ID        pgtype.UUID        `db:"id" json:"id"`
+	Name      string             `db:"name" json:"name"`
+	Email     string             `db:"email" json:"email"`
+	Coins     pgtype.Int4        `db:"coins" json:"coins"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (UpdateUserNameRow, error) {
+	row := q.db.QueryRow(ctx, updateUserName, arg.ID, arg.Name)
+	var i UpdateUserNameRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
