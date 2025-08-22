@@ -62,7 +62,7 @@ func main() {
 	productRepo := repository.NewProductRepository(queries)
 	productUC := usecase.NewProductUseCase(productRepo)
 
-	cartRepo := repository.NewCartRepository()
+	cartRepo := repository.NewCartRepository(queries)
 	cartUC := usecase.NewCartUseCase(cartRepo)
 
 	categoryRepo := repository.NewCategoryRepository(queries)
