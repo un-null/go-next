@@ -11,18 +11,24 @@ import (
 )
 
 type Querier interface {
+	CheckCartItemExists(ctx context.Context, arg CheckCartItemExistsParams) (bool, error)
 	CheckEmailExists(ctx context.Context, email string) (bool, error)
 	CheckEmailExistsForOtherUser(ctx context.Context, arg CheckEmailExistsForOtherUserParams) (bool, error)
+	CreateCartItem(ctx context.Context, arg CreateCartItemParams) (CartItem, error)
 	// queries/user.sql
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	DeleteAllCartItemsByUser(ctx context.Context, userID pgtype.UUID) error
+	DeleteCartItem(ctx context.Context, arg DeleteCartItemParams) error
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
 	GetAllCategories(ctx context.Context) ([]Category, error)
+	GetCartItemsByUser(ctx context.Context, userID pgtype.UUID) ([]CartItem, error)
 	GetCategoryByID(ctx context.Context, id int32) (Category, error)
 	GetProductByID(ctx context.Context, id int32) (Product, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error)
+	UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) (CartItem, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error)
 	UpdateUserCoins(ctx context.Context, arg UpdateUserCoinsParams) (UpdateUserCoinsRow, error)
 	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (UpdateUserEmailRow, error)
