@@ -1,8 +1,12 @@
 package usecase
 
 import (
+	"context"
+
 	"backend/internal/entity"
 	"backend/internal/repository"
+
+	"github.com/google/uuid"
 )
 
 type CartUseCase struct {
@@ -13,18 +17,18 @@ func NewCartUseCase(r repository.CartRepository) *CartUseCase {
 	return &CartUseCase{repo: r}
 }
 
-func (u *CartUseCase) AddToCart(userID int, productID int, quantity int) error {
-	return u.repo.AddToCart(userID, productID, quantity)
+func (u *CartUseCase) AddToCart(ctx context.Context, userID uuid.UUID, productID int, quantity int) error {
+	return u.repo.AddToCart(ctx, userID, productID, quantity)
 }
 
-func (u *CartUseCase) GetCartItems(userID int) ([]entity.CartItem, error) {
-	return u.repo.GetCartItems(userID)
+func (u *CartUseCase) GetCartItems(ctx context.Context, userID uuid.UUID) ([]entity.CartItem, error) {
+	return u.repo.GetCartItems(ctx, userID)
 }
 
-func (u *CartUseCase) RemoveFromCart(userID int, productID int) error {
-	return u.repo.RemoveFromCart(userID, productID)
+func (u *CartUseCase) RemoveFromCart(ctx context.Context, userID uuid.UUID, productID int) error {
+	return u.repo.RemoveFromCart(ctx, userID, productID)
 }
 
-func (u *CartUseCase) ClearCart(userID int) error {
-	return u.repo.ClearCart(userID)
+func (u *CartUseCase) ClearCart(ctx context.Context, userID uuid.UUID) error {
+	return u.repo.ClearCart(ctx, userID)
 }
