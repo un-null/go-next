@@ -1,73 +1,114 @@
 package repository
 
 import (
+	"backend/internal/database"
 	"backend/internal/entity"
-	"errors"
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type CartRepository interface {
-	AddToCart(userID int, productID int, quantity int) error
-	GetCartItems(userID int) ([]entity.CartItem, error)
-	RemoveFromCart(userID int, productID int) error
-	ClearCart(userID int) error
+	AddToCart(ctx context.Context, userID uuid.UUID, productID int, quantity int) error
+	GetCartItems(ctx context.Context, userID uuid.UUID) ([]entity.CartItem, error)
+	RemoveFromCart(ctx context.Context, userID uuid.UUID, productID int) error
+	ClearCart(ctx context.Context, userID uuid.UUID) error
 }
 
 type cartRepository struct {
-	cartData map[int][]entity.CartItem
+	queries *database.Queries
 }
 
-func NewCartRepository() CartRepository {
+func NewCartRepository(queries *database.Queries) CartRepository {
 	return &cartRepository{
-		cartData: make(map[int][]entity.CartItem),
+		queries: queries,
 	}
 }
 
-func (r *cartRepository) AddToCart(userID int, productID int, quantity int) error {
-	items := r.cartData[userID]
+func (r *cartRepository) AddToCart(ctx context.Context, userID uuid.UUID, productID int, quantity int) error {
+	// Check if item already exists in cart
+	exists, err := r.queries.CheckCartItemExists(ctx, database.CheckCartItemExistsParams{
+		UserID:    database.UUIDToPgtype(userID),
+		ProductID: int32(productID),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to check if cart item exists: %w", err)
+	}
 
-	for i, item := range items {
-		if item.ProductID == productID {
-			items[i].Quantity += quantity
-			return nil
+	if exists {
+		_, err = r.queries.UpdateCartItemQuantity(ctx, database.UpdateCartItemQuantityParams{
+			UserID:    database.UUIDToPgtype(userID),
+			ProductID: int32(productID),
+			Quantity:  int32(quantity), // This should be the new total quantity, not addition
+			UpdatedAt: database.TimeToPgtype(time.Now()),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update cart item quantity: %w", err)
 		}
+		return nil
 	}
 
-	newCartItem := entity.CartItem{
-		UserID:    userID,
-		ProductID: productID,
-		Quantity:  quantity,
+	_, err = r.queries.CreateCartItem(ctx, database.CreateCartItemParams{
+		UserID:    database.UUIDToPgtype(userID),
+		ProductID: int32(productID),
+		Quantity:  int32(quantity),
+		CreatedAt: database.TimeToPgtype(time.Now()),
+		UpdatedAt: database.TimeToPgtype(time.Now()),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add item to cart: %w", err)
 	}
 
-	r.cartData[userID] = append(items, newCartItem)
 	return nil
 }
 
-func (r *cartRepository) GetCartItems(userID int) ([]entity.CartItem, error) {
-	return r.cartData[userID], nil
-}
+func (r *cartRepository) GetCartItems(ctx context.Context, userID uuid.UUID) ([]entity.CartItem, error) {
+	dbCartItems, err := r.queries.GetCartItemsByUser(ctx, database.UUIDToPgtype(userID))
 
-func (r *cartRepository) RemoveFromCart(userID int, productId int) error {
-	items := r.cartData[userID]
-	newItems := []entity.CartItem{}
-	found := false
-
-	for _, item := range items {
-		if item.ProductID == productId {
-			found = true
-			continue
-		}
-		newItems = append(newItems, item)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cart items: %w", err)
 	}
 
-	if !found {
-		return errors.New("item not found in cart")
+	cartItems := make([]entity.CartItem, len(dbCartItems))
+	for i, dbItem := range dbCartItems {
+		cartItems[i] = *dbCartItemToEntity(dbItem)
 	}
 
-	r.cartData[userID] = newItems
-	return nil
+	return cartItems, nil
 }
 
-func (r *cartRepository) ClearCart(userId int) error {
-	delete(r.cartData, userId)
-	return nil
+func (r *cartRepository) RemoveFromCart(ctx context.Context, userID uuid.UUID, productID int) error {
+	err := r.queries.DeleteCartItem(ctx, database.DeleteCartItemParams{
+		UserID:    database.UUIDToPgtype(userID),
+		ProductID: int32(productID),
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to remove item from cart: %w", err)
+	}
+
+	return err
+}
+
+func (r *cartRepository) ClearCart(ctx context.Context, userID uuid.UUID) error {
+	err := r.queries.DeleteAllCartItemsByUser(ctx, database.UUIDToPgtype(userID))
+
+	if err != nil {
+		return fmt.Errorf("failed to clear cart: %w", err)
+	}
+
+	return err
+}
+
+func dbCartItemToEntity(dbItem database.CartItem) *entity.CartItem {
+	return &entity.CartItem{
+		ID:        int(dbItem.ID),
+		UserID:    database.PgtypeToUUID(dbItem.UserID),
+		ProductID: int(dbItem.ProductID),
+		Quantity:  int(dbItem.Quantity),
+		CreatedAt: database.PgtypeToTime(dbItem.CreatedAt),
+		UpdatedAt: database.PgtypeToTime(dbItem.UpdatedAt),
+	}
 }
