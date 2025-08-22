@@ -6,8 +6,6 @@ import (
 
 	"backend/internal/database"
 	"backend/internal/entity"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ProductRepository interface {
@@ -93,21 +91,12 @@ func dbProductToEntity(dbProduct database.Product) *entity.Product {
 		CategoryID:    int(dbProduct.CategoryID),
 		Name:          dbProduct.Name,
 		Description:   dbProduct.Description.String,
-		Price:         numericToFloat64(dbProduct.Price),
+		Price:         database.NumericToFloat64(dbProduct.Price),
 		StockQuantity: int(dbProduct.StockQuantity),
 		ImageURL:      dbProduct.ImageUrl.String,
-		AverageRating: numericToFloat64(dbProduct.AverageRating),
+		AverageRating: database.NumericToFloat64(dbProduct.AverageRating),
 		TotalComments: int(dbProduct.TotalComments.Int32),
 		CreatedAt:     dbProduct.CreatedAt.Time,
 		UpdatedAt:     dbProduct.UpdatedAt.Time,
 	}
-}
-
-func numericToFloat64(num pgtype.Numeric) float64 {
-	if !num.Valid {
-		return 0
-	}
-
-	f, _ := num.Float64Value()
-	return f.Float64
 }
