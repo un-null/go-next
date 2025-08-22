@@ -1,10 +1,13 @@
 package http
 
 import (
-	"backend/internal/usecase"
 	"net/http"
 	"strconv"
 
+	"backend/internal/entity"
+	"backend/internal/usecase"
+
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -24,59 +27,155 @@ func (h *CartHandler) RegisterRoutes(g *echo.Group) {
 }
 
 func (h *CartHandler) AddToCart(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, entity.AddToCartResponse{
+			Success: false,
+			Message: "Invalid user ID",
+		})
+	}
+
 	var request struct {
 		ProductID int `json:"product_id"`
 		Quantity  int `json:"quantity"`
 	}
 
 	if err := c.Bind(&request); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+		return c.JSON(http.StatusBadRequest, entity.AddToCartResponse{
+			Success: false,
+			Message: "Invalid request body",
+		})
 	}
 
-	err := h.usecase.AddToCart(userID, request.ProductID, request.Quantity)
+	if request.Quantity <= 0 {
+		return c.JSON(http.StatusBadRequest, entity.AddToCartResponse{
+			Success: false,
+			Message: "Quantity must be greater than 0",
+		})
+	}
+
+	err = h.usecase.AddToCart(c.Request().Context(), userID, request.ProductID, request.Quantity)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, entity.AddToCartResponse{
+			Success: false,
+			Message: err.Error(),
+		})
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Product added to cart"})
+	return c.JSON(http.StatusOK, entity.AddToCartResponse{
+		Success: true,
+		Message: "Product added to cart successfully",
+	})
 }
 
 func (h *CartHandler) GetCartItems(c echo.Context) error {
-	userID := c.Get("userID").(int)
-	cartItems, err := h.usecase.GetCartItems(userID)
-
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusUnauthorized, entity.GetCartResponse{
+			Success: false,
+			Message: "Invalid user ID",
+		})
 	}
 
-	return c.JSON(http.StatusOK, cartItems)
+	cartItems, err := h.usecase.GetCartItems(c.Request().Context(), userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, entity.GetCartResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, entity.GetCartResponse{
+		Items:      cartItems,
+		TotalItems: len(cartItems),
+		Success:    true,
+	})
 }
 
 func (h *CartHandler) RemoveFromCart(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, entity.RemoveFromCartResponse{
+			Success: false,
+			Message: "Invalid user ID",
+		})
+	}
+
 	productIDStr := c.QueryParam("product_id")
+	if productIDStr == "" {
+		return c.JSON(http.StatusBadRequest, entity.RemoveFromCartResponse{
+			Success: false,
+			Message: "product_id parameter is required",
+		})
+	}
+
 	productID, err := strconv.Atoi(productIDStr)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid product_id"})
+		return c.JSON(http.StatusBadRequest, entity.RemoveFromCartResponse{
+			Success: false,
+			Message: "Invalid product_id format",
+		})
 	}
 
-	err = h.usecase.RemoveFromCart(userID, productID)
-
+	err = h.usecase.RemoveFromCart(c.Request().Context(), userID, productID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, entity.RemoveFromCartResponse{
+			Success: false,
+			Message: err.Error(),
+		})
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Product removed from cart"})
+	return c.JSON(http.StatusOK, entity.RemoveFromCartResponse{
+		Success: true,
+		Message: "Product removed from cart successfully",
+	})
 }
 
 func (h *CartHandler) ClearCart(c echo.Context) error {
-	userID := c.Get("userID").(int)
-	err := h.usecase.ClearCart(userID)
-
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusUnauthorized, entity.ClearCartResponse{
+			Success: false,
+			Message: "Invalid user ID",
+		})
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Cart cleared"})
+	cartItems, err := h.usecase.GetCartItems(c.Request().Context(), userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, entity.ClearCartResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+	}
+	itemsCount := len(cartItems)
+
+	err = h.usecase.ClearCart(c.Request().Context(), userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, entity.ClearCartResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, entity.ClearCartResponse{
+		Success:      true,
+		ItemsCleared: itemsCount,
+		Message:      "Cart cleared successfully",
+	})
+}
+
+func getUserIDFromContext(c echo.Context) (uuid.UUID, error) {
+	userIDInterface := c.Get("userID")
+	if userIDInterface == nil {
+		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "User ID not found")
+	}
+
+	switch v := userIDInterface.(type) {
+	case string:
+		return uuid.Parse(v)
+	case uuid.UUID:
+		return v, nil
+	default:
+		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "Invalid user ID type")
+	}
 }
