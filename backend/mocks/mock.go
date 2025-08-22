@@ -109,3 +109,47 @@ func (m *MockProductQueries) UpdateProductStock(ctx context.Context, arg databas
 	args := m.Called(ctx, arg)
 	return args.Get(0).(database.Product), args.Error(1)
 }
+
+type CartQueriesInterface interface {
+	AddToCart(ctx context.Context, userID pgtype.UUID, productID int32, quantity int32) error
+	GetCartItems(ctx context.Context, userID pgtype.UUID) ([]database.CartItem, error)
+	RemoveFromCart(ctx context.Context, userID pgtype.UUID, productID int32) error
+	ClearCart(ctx context.Context, userID pgtype.UUID) error
+	GetCartItem(ctx context.Context, userID pgtype.UUID, productID int32) (database.CartItem, error)
+	UpdateCartItemQuantity(ctx context.Context, userID pgtype.UUID, productID int32, quantity int32) error
+}
+
+// MockCartQueries is a mock implementation for cart-related database operations
+type MockCartQueries struct {
+	mock.Mock
+}
+
+func (m *MockCartQueries) AddToCart(ctx context.Context, userID pgtype.UUID, productID int32, quantity int32) error {
+	args := m.Called(ctx, userID, productID, quantity)
+	return args.Error(0)
+}
+
+func (m *MockCartQueries) GetCartItems(ctx context.Context, userID pgtype.UUID) ([]database.CartItem, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).([]database.CartItem), args.Error(1)
+}
+
+func (m *MockCartQueries) RemoveFromCart(ctx context.Context, userID pgtype.UUID, productID int32) error {
+	args := m.Called(ctx, userID, productID)
+	return args.Error(0)
+}
+
+func (m *MockCartQueries) ClearCart(ctx context.Context, userID pgtype.UUID) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockCartQueries) GetCartItem(ctx context.Context, userID pgtype.UUID, productID int32) (database.CartItem, error) {
+	args := m.Called(ctx, userID, productID)
+	return args.Get(0).(database.CartItem), args.Error(1)
+}
+
+func (m *MockCartQueries) UpdateCartItemQuantity(ctx context.Context, userID pgtype.UUID, productID int32, quantity int32) error {
+	args := m.Called(ctx, userID, productID, quantity)
+	return args.Error(0)
+}
