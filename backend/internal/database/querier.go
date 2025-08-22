@@ -6,16 +6,28 @@ package database
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	CheckEmailExists(ctx context.Context, email string) (bool, error)
+	CheckEmailExistsForOtherUser(ctx context.Context, arg CheckEmailExistsForOtherUserParams) (bool, error)
+	// queries/user.sql
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	DeleteUser(ctx context.Context, id pgtype.UUID) error
 	GetAllCategories(ctx context.Context) ([]Category, error)
 	GetCategoryByID(ctx context.Context, id int32) (Category, error)
 	GetProductByID(ctx context.Context, id int32) (Product, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error)
+	UpdateUserCoins(ctx context.Context, arg UpdateUserCoinsParams) (UpdateUserCoinsRow, error)
+	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (UpdateUserEmailRow, error)
+	UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (UpdateUserNameRow, error)
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }
 
 var _ Querier = (*Queries)(nil)
