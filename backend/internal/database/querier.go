@@ -15,6 +15,7 @@ type Querier interface {
 	CheckEmailExists(ctx context.Context, email string) (bool, error)
 	CheckEmailExistsForOtherUser(ctx context.Context, arg CheckEmailExistsForOtherUserParams) (bool, error)
 	CreateCartItem(ctx context.Context, arg CreateCartItemParams) (CartItem, error)
+	CreateCoinTransaction(ctx context.Context, arg CreateCoinTransactionParams) (CoinTransaction, error)
 	// queries/user.sql
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	DeleteAllCartItemsByUser(ctx context.Context, userID pgtype.UUID) error
@@ -23,6 +24,8 @@ type Querier interface {
 	GetAllCategories(ctx context.Context) ([]Category, error)
 	GetCartItemsByUser(ctx context.Context, userID pgtype.UUID) ([]CartItem, error)
 	GetCategoryByID(ctx context.Context, id int32) (Category, error)
+	GetCoinTransactionByID(ctx context.Context, id int32) (CoinTransaction, error)
+	GetCoinTransactionsByUserID(ctx context.Context, arg GetCoinTransactionsByUserIDParams) ([]CoinTransaction, error)
 	GetProductByID(ctx context.Context, id int32) (Product, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)

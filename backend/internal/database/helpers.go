@@ -22,6 +22,20 @@ func PgtypeToUUID(pgUUID pgtype.UUID) uuid.UUID {
 	return pgUUID.Bytes
 }
 
+func StringToPgtype(s string) pgtype.Text {
+	return pgtype.Text{
+		String: s,
+		Valid:  s != "",
+	}
+}
+
+func PgtypeToString(pgText pgtype.Text) string {
+	if !pgText.Valid {
+		return ""
+	}
+	return pgText.String
+}
+
 func TimeToPgtype(t time.Time) pgtype.Timestamptz {
 	return pgtype.Timestamptz{
 		Time:  t,

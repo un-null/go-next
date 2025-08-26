@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,11 +26,13 @@ type UserRepository interface {
 
 type userRepository struct {
 	queries *database.Queries
+	db      *pgxpool.Pool
 }
 
-func NewUserRepository(queries *database.Queries) UserRepository {
+func NewUserRepository(queries *database.Queries, db *pgxpool.Pool) UserRepository {
 	return &userRepository{
 		queries: queries,
+		db:      db,
 	}
 }
 
