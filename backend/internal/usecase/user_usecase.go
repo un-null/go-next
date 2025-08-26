@@ -15,7 +15,9 @@ type UserUseCase struct {
 }
 
 func NewUserUseCase(r repository.UserRepository) *UserUseCase {
-	return &UserUseCase{repo: r}
+	return &UserUseCase{
+		repo: r,
+	}
 }
 
 func (u *UserUseCase) GetUserById(ctx context.Context, id uuid.UUID) (*entity.User, error) {
