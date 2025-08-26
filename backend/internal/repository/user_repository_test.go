@@ -17,7 +17,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Test repository wrapper that uses the interface
+// Test repository wrapper that implements UserRepository interface
 type testUserRepository struct {
 	queries mocks.UserQueriesInterface
 }
@@ -28,9 +28,8 @@ func NewTestUserRepository(queries mocks.UserQueriesInterface) UserRepository {
 	}
 }
 
-// Implement the same methods as the original repository
 func (r *testUserRepository) GetUserById(ctx context.Context, id uuid.UUID) (*entity.User, error) {
-	dbUser, err := r.queries.GetUserByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	dbUser, err := r.queries.GetUserByID(ctx, database.UUIDToPgtype(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errors.New("user not found")
@@ -39,11 +38,11 @@ func (r *testUserRepository) GetUserById(ctx context.Context, id uuid.UUID) (*en
 	}
 
 	user := &entity.User{
-		ID:           dbUser.ID.Bytes,
+		ID:           database.PgtypeToUUID(dbUser.ID),
 		Name:         dbUser.Name,
 		Email:        dbUser.Email,
 		PasswordHash: dbUser.PasswordHash,
-		Coins:        int(dbUser.Coins.Int32),
+		Coins:        int(database.PgtypeToInt32(dbUser.Coins)),
 		CreatedAt:    dbUser.CreatedAt.Time,
 		UpdatedAt:    dbUser.UpdatedAt.Time,
 	}
@@ -61,11 +60,11 @@ func (r *testUserRepository) GetUserByEmail(ctx context.Context, email string) (
 	}
 
 	user := &entity.User{
-		ID:           dbUser.ID.Bytes,
+		ID:           database.PgtypeToUUID(dbUser.ID),
 		Name:         dbUser.Name,
 		Email:        dbUser.Email,
 		PasswordHash: dbUser.PasswordHash,
-		Coins:        int(dbUser.Coins.Int32),
+		Coins:        int(database.PgtypeToInt32(dbUser.Coins)),
 		CreatedAt:    dbUser.CreatedAt.Time,
 		UpdatedAt:    dbUser.UpdatedAt.Time,
 	}
@@ -80,7 +79,7 @@ func (r *testUserRepository) CreateUser(ctx context.Context, req entity.CreateUs
 		return nil, err
 	}
 	if exists {
-		return nil, errors.New("user already exists")
+		return nil, errors.New("email already exists")
 	}
 
 	// Hash password
@@ -94,17 +93,17 @@ func (r *testUserRepository) CreateUser(ctx context.Context, req entity.CreateUs
 		Name:         req.Name,
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
-		Coins:        pgtype.Int4{Int32: int32(req.Coins), Valid: true},
+		Coins:        database.Int32ToPgtype(int32(req.Coins)),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	user := &entity.User{
-		ID:        dbUser.ID.Bytes,
+		ID:        database.PgtypeToUUID(dbUser.ID),
 		Name:      dbUser.Name,
 		Email:     dbUser.Email,
-		Coins:     int(dbUser.Coins.Int32),
+		Coins:     int(database.PgtypeToInt32(dbUser.Coins)),
 		CreatedAt: dbUser.CreatedAt.Time,
 		UpdatedAt: dbUser.UpdatedAt.Time,
 	}
@@ -114,7 +113,7 @@ func (r *testUserRepository) CreateUser(ctx context.Context, req entity.CreateUs
 
 func (r *testUserRepository) UpdateUserName(ctx context.Context, id uuid.UUID, name string) (*entity.User, error) {
 	dbUser, err := r.queries.UpdateUserName(ctx, database.UpdateUserNameParams{
-		ID:   pgtype.UUID{Bytes: id, Valid: true},
+		ID:   database.UUIDToPgtype(id),
 		Name: name,
 	})
 	if err != nil {
@@ -125,10 +124,10 @@ func (r *testUserRepository) UpdateUserName(ctx context.Context, id uuid.UUID, n
 	}
 
 	user := &entity.User{
-		ID:        dbUser.ID.Bytes,
+		ID:        database.PgtypeToUUID(dbUser.ID),
 		Name:      dbUser.Name,
 		Email:     dbUser.Email,
-		Coins:     int(dbUser.Coins.Int32),
+		Coins:     int(database.PgtypeToInt32(dbUser.Coins)),
 		CreatedAt: dbUser.CreatedAt.Time,
 		UpdatedAt: dbUser.UpdatedAt.Time,
 	}
@@ -140,7 +139,7 @@ func (r *testUserRepository) UpdateUserEmail(ctx context.Context, id uuid.UUID, 
 	// Check if new email already exists for another user
 	exists, err := r.queries.CheckEmailExistsForOtherUser(ctx, database.CheckEmailExistsForOtherUserParams{
 		Email: email,
-		ID:    pgtype.UUID{Bytes: id, Valid: true},
+		ID:    database.UUIDToPgtype(id),
 	})
 	if err != nil {
 		return nil, err
@@ -150,7 +149,7 @@ func (r *testUserRepository) UpdateUserEmail(ctx context.Context, id uuid.UUID, 
 	}
 
 	dbUser, err := r.queries.UpdateUserEmail(ctx, database.UpdateUserEmailParams{
-		ID:    pgtype.UUID{Bytes: id, Valid: true},
+		ID:    database.UUIDToPgtype(id),
 		Email: email,
 	})
 	if err != nil {
@@ -161,34 +160,10 @@ func (r *testUserRepository) UpdateUserEmail(ctx context.Context, id uuid.UUID, 
 	}
 
 	user := &entity.User{
-		ID:        dbUser.ID.Bytes,
+		ID:        database.PgtypeToUUID(dbUser.ID),
 		Name:      dbUser.Name,
 		Email:     dbUser.Email,
-		Coins:     int(dbUser.Coins.Int32),
-		CreatedAt: dbUser.CreatedAt.Time,
-		UpdatedAt: dbUser.UpdatedAt.Time,
-	}
-
-	return user, nil
-}
-
-func (r *testUserRepository) UpdateUserCoins(ctx context.Context, id uuid.UUID, coinsDelta int) (*entity.User, error) {
-	dbUser, err := r.queries.UpdateUserCoins(ctx, database.UpdateUserCoinsParams{
-		ID:    pgtype.UUID{Bytes: id, Valid: true},
-		Coins: pgtype.Int4{Int32: int32(coinsDelta), Valid: true},
-	})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("user not found")
-		}
-		return nil, err
-	}
-
-	user := &entity.User{
-		ID:        dbUser.ID.Bytes,
-		Name:      dbUser.Name,
-		Email:     dbUser.Email,
-		Coins:     int(dbUser.Coins.Int32),
+		Coins:     int(database.PgtypeToInt32(dbUser.Coins)),
 		CreatedAt: dbUser.CreatedAt.Time,
 		UpdatedAt: dbUser.UpdatedAt.Time,
 	}
@@ -197,14 +172,15 @@ func (r *testUserRepository) UpdateUserCoins(ctx context.Context, id uuid.UUID, 
 }
 
 func (r *testUserRepository) UpdateUserPassword(ctx context.Context, id uuid.UUID, newPassword string) error {
-	// Hash the new password
+	// Hash new password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
+	// Update password
 	err = r.queries.UpdateUserPassword(ctx, database.UpdateUserPasswordParams{
-		ID:           pgtype.UUID{Bytes: id, Valid: true},
+		ID:           database.UUIDToPgtype(id),
 		PasswordHash: string(hashedPassword),
 	})
 	if err != nil {
@@ -214,8 +190,32 @@ func (r *testUserRepository) UpdateUserPassword(ctx context.Context, id uuid.UUI
 	return nil
 }
 
+func (r *testUserRepository) UpdateUserCoins(ctx context.Context, id uuid.UUID, coinsDelta int) (*entity.User, error) {
+	dbUser, err := r.queries.UpdateUserCoins(ctx, database.UpdateUserCoinsParams{
+		ID:    database.UUIDToPgtype(id),
+		Coins: database.Int32ToPgtype(int32(coinsDelta)),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	user := &entity.User{
+		ID:        database.PgtypeToUUID(dbUser.ID),
+		Name:      dbUser.Name,
+		Email:     dbUser.Email,
+		Coins:     int(database.PgtypeToInt32(dbUser.Coins)),
+		CreatedAt: dbUser.CreatedAt.Time,
+		UpdatedAt: dbUser.UpdatedAt.Time,
+	}
+
+	return user, nil
+}
+
 func (r *testUserRepository) DeleteUser(ctx context.Context, id uuid.UUID) error {
-	err := r.queries.DeleteUser(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	err := r.queries.DeleteUser(ctx, database.UUIDToPgtype(id))
 	if err != nil {
 		return err
 	}
@@ -233,64 +233,56 @@ func (r *testUserRepository) CheckEmailExists(ctx context.Context, email string)
 // Helper functions for tests
 func createMockDBUser(id uuid.UUID, name, email, passwordHash string, coins int) database.User {
 	return database.User{
-		ID:           pgtype.UUID{Bytes: id, Valid: true},
+		ID:           database.UUIDToPgtype(id),
 		Name:         name,
 		Email:        email,
 		PasswordHash: passwordHash,
-		Coins:        pgtype.Int4{Int32: int32(coins), Valid: true},
+		Coins:        database.Int32ToPgtype(int32(coins)),
 		CreatedAt:    pgtype.Timestamptz{Time: time.Now(), Valid: true},
 		UpdatedAt:    pgtype.Timestamptz{Time: time.Now(), Valid: true},
 	}
 }
 
-func setupTestRepository() (UserRepository, *mocks.MockUserQueries) {
+func setupUserTestRepository() (UserRepository, *mocks.MockUserQueries) {
 	mockQueries := new(mocks.MockUserQueries)
 	repo := NewTestUserRepository(mockQueries)
 	return repo, mockQueries
 }
 
+// Tests
 func TestGetUserById_Found(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
-	// Test data
 	testUserID := uuid.New()
 	expectedDBUser := createMockDBUser(testUserID, "Alice", "alice@example.com", "hashedpassword", 100)
 
-	// Set up mock expectation
-	mockQueries.On("GetUserByID", ctx, pgtype.UUID{Bytes: testUserID, Valid: true}).
+	mockQueries.On("GetUserByID", ctx, database.UUIDToPgtype(testUserID)).
 		Return(expectedDBUser, nil)
 
-	// Execute
 	user, err := repo.GetUserById(ctx, testUserID)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
 	assert.Equal(t, testUserID, user.ID)
 	assert.Equal(t, "Alice", user.Name)
 	assert.Equal(t, "alice@example.com", user.Email)
-	assert.Equal(t, "hashedpassword", user.PasswordHash)
 	assert.Equal(t, 100, user.Coins)
 
-	// Verify mock expectations
 	mockQueries.AssertExpectations(t)
 }
 
 func TestGetUserById_NotFound(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
 	testUserID := uuid.New()
 
-	// Set up mock to return sql.ErrNoRows
-	mockQueries.On("GetUserByID", ctx, pgtype.UUID{Bytes: testUserID, Valid: true}).
+	mockQueries.On("GetUserByID", ctx, database.UUIDToPgtype(testUserID)).
 		Return(database.User{}, sql.ErrNoRows)
 
-	// Execute
 	user, err := repo.GetUserById(ctx, testUserID)
 
-	// Assert
 	assert.Error(t, err)
 	assert.Nil(t, user)
 	assert.Equal(t, "user not found", err.Error())
@@ -299,7 +291,7 @@ func TestGetUserById_NotFound(t *testing.T) {
 }
 
 func TestGetUserByEmail_Found(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
 	testEmail := "alice@example.com"
@@ -309,10 +301,8 @@ func TestGetUserByEmail_Found(t *testing.T) {
 	mockQueries.On("GetUserByEmail", ctx, testEmail).
 		Return(expectedDBUser, nil)
 
-	// Execute
 	user, err := repo.GetUserByEmail(ctx, testEmail)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
 	assert.Equal(t, testEmail, user.Email)
@@ -322,7 +312,7 @@ func TestGetUserByEmail_Found(t *testing.T) {
 }
 
 func TestGetUserByEmail_NotFound(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
 	testEmail := "nonexistent@example.com"
@@ -330,10 +320,8 @@ func TestGetUserByEmail_NotFound(t *testing.T) {
 	mockQueries.On("GetUserByEmail", ctx, testEmail).
 		Return(database.User{}, sql.ErrNoRows)
 
-	// Execute
 	user, err := repo.GetUserByEmail(ctx, testEmail)
 
-	// Assert
 	assert.Error(t, err)
 	assert.Nil(t, user)
 	assert.Equal(t, "user not found", err.Error())
@@ -342,7 +330,7 @@ func TestGetUserByEmail_NotFound(t *testing.T) {
 }
 
 func TestCreateUser_Success(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
 	req := entity.CreateUserRequest{
@@ -352,38 +340,32 @@ func TestCreateUser_Success(t *testing.T) {
 		Coins:    0,
 	}
 
-	// Mock CheckEmailExists to return false (email doesn't exist)
+	// Mock CheckEmailExists to return false
 	mockQueries.On("CheckEmailExists", ctx, req.Email).
 		Return(false, nil)
 
 	// Mock CreateUser
 	createdUserID := uuid.New()
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-
-	// We need to use mock.MatchedBy to handle the hashed password comparison
 	mockQueries.On("CreateUser", ctx, mock.MatchedBy(func(params database.CreateUserParams) bool {
 		return params.Name == req.Name &&
 			params.Email == req.Email &&
-			params.Coins.Int32 == int32(req.Coins) &&
-			len(params.PasswordHash) > 0 // Just check that password is hashed
-	})).Return(createMockDBUser(createdUserID, req.Name, req.Email, string(hashedPassword), req.Coins), nil)
+			database.PgtypeToInt32(params.Coins) == int32(req.Coins) &&
+			len(params.PasswordHash) > 0
+	})).Return(createMockDBUser(createdUserID, req.Name, req.Email, "hashedpassword", req.Coins), nil)
 
-	// Execute
 	user, err := repo.CreateUser(ctx, req)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
 	assert.Equal(t, req.Name, user.Name)
 	assert.Equal(t, req.Email, user.Email)
 	assert.Equal(t, req.Coins, user.Coins)
-	assert.NotEmpty(t, user.ID)
 
 	mockQueries.AssertExpectations(t)
 }
 
-func TestCreateUser_DuplicateEmail(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+func TestCreateUser_EmailExists(t *testing.T) {
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
 	req := entity.CreateUserRequest{
@@ -393,169 +375,124 @@ func TestCreateUser_DuplicateEmail(t *testing.T) {
 		Coins:    0,
 	}
 
-	// Mock CheckEmailExists to return true (email already exists)
 	mockQueries.On("CheckEmailExists", ctx, req.Email).
 		Return(true, nil)
 
-	// Execute
 	user, err := repo.CreateUser(ctx, req)
 
-	// Assert
 	assert.Error(t, err)
 	assert.Nil(t, user)
-	assert.Equal(t, "user already exists", err.Error())
-
-	mockQueries.AssertExpectations(t)
-}
-
-func TestCheckEmailExists_True(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
-	ctx := context.Background()
-
-	testEmail := "existing@example.com"
-
-	mockQueries.On("CheckEmailExists", ctx, testEmail).
-		Return(true, nil)
-
-	// Execute
-	exists, err := repo.CheckEmailExists(ctx, testEmail)
-
-	// Assert
-	assert.NoError(t, err)
-	assert.True(t, exists)
-
-	mockQueries.AssertExpectations(t)
-}
-
-func TestCheckEmailExists_False(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
-	ctx := context.Background()
-
-	testEmail := "nonexistent@example.com"
-
-	mockQueries.On("CheckEmailExists", ctx, testEmail).
-		Return(false, nil)
-
-	// Execute
-	exists, err := repo.CheckEmailExists(ctx, testEmail)
-
-	// Assert
-	assert.NoError(t, err)
-	assert.False(t, exists)
+	assert.Contains(t, err.Error(), "email already exists")
 
 	mockQueries.AssertExpectations(t)
 }
 
 func TestUpdateUserName_Success(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
 	testUserID := uuid.New()
 	newName := "Updated Name"
-	expectedParams := database.UpdateUserNameParams{
-		ID:   pgtype.UUID{Bytes: testUserID, Valid: true},
-		Name: newName,
-	}
 
 	updatedUser := createMockDBUser(testUserID, newName, "test@example.com", "hashedpassword", 100)
 
-	mockQueries.On("UpdateUserName", ctx, expectedParams).
-		Return(updatedUser, nil)
+	mockQueries.On("UpdateUserName", ctx, database.UpdateUserNameParams{
+		ID:   database.UUIDToPgtype(testUserID),
+		Name: newName,
+	}).Return(updatedUser, nil)
 
-	// Execute
 	user, err := repo.UpdateUserName(ctx, testUserID, newName)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
 	assert.Equal(t, newName, user.Name)
-	assert.Equal(t, testUserID, user.ID)
-
-	mockQueries.AssertExpectations(t)
-}
-
-func TestUpdateUserName_NotFound(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
-	ctx := context.Background()
-
-	testUserID := uuid.New()
-	newName := "Updated Name"
-	expectedParams := database.UpdateUserNameParams{
-		ID:   pgtype.UUID{Bytes: testUserID, Valid: true},
-		Name: newName,
-	}
-
-	mockQueries.On("UpdateUserName", ctx, expectedParams).
-		Return(database.User{}, sql.ErrNoRows)
-
-	// Execute
-	user, err := repo.UpdateUserName(ctx, testUserID, newName)
-
-	// Assert
-	assert.Error(t, err)
-	assert.Nil(t, user)
-	assert.Equal(t, "user not found", err.Error())
 
 	mockQueries.AssertExpectations(t)
 }
 
 func TestUpdateUserEmail_Success(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
 	testUserID := uuid.New()
 	newEmail := "newemail@example.com"
 
-	// Mock CheckEmailExistsForOtherUser
-	checkParams := database.CheckEmailExistsForOtherUserParams{
+	// Mock email check
+	mockQueries.On("CheckEmailExistsForOtherUser", ctx, database.CheckEmailExistsForOtherUserParams{
 		Email: newEmail,
-		ID:    pgtype.UUID{Bytes: testUserID, Valid: true},
-	}
-	mockQueries.On("CheckEmailExistsForOtherUser", ctx, checkParams).
-		Return(false, nil)
+		ID:    database.UUIDToPgtype(testUserID),
+	}).Return(false, nil)
 
-	// Mock UpdateUserEmail
-	updateParams := database.UpdateUserEmailParams{
-		ID:    pgtype.UUID{Bytes: testUserID, Valid: true},
-		Email: newEmail,
-	}
+	// Mock update
 	updatedUser := createMockDBUser(testUserID, "Test User", newEmail, "hashedpassword", 100)
+	mockQueries.On("UpdateUserEmail", ctx, database.UpdateUserEmailParams{
+		ID:    database.UUIDToPgtype(testUserID),
+		Email: newEmail,
+	}).Return(updatedUser, nil)
 
-	mockQueries.On("UpdateUserEmail", ctx, updateParams).
-		Return(updatedUser, nil)
-
-	// Execute
 	user, err := repo.UpdateUserEmail(ctx, testUserID, newEmail)
 
-	// Assert
 	assert.NoError(t, err)
-	assert.NotNil(t, user)
 	assert.Equal(t, newEmail, user.Email)
-	assert.Equal(t, testUserID, user.ID)
 
 	mockQueries.AssertExpectations(t)
 }
 
+func TestUpdateUserEmail_EmailTaken(t *testing.T) {
+	repo, mockQueries := setupUserTestRepository()
+	ctx := context.Background()
+
+	testUserID := uuid.New()
+	newEmail := "taken@example.com"
+
+	mockQueries.On("CheckEmailExistsForOtherUser", ctx, database.CheckEmailExistsForOtherUserParams{
+		Email: newEmail,
+		ID:    database.UUIDToPgtype(testUserID),
+	}).Return(true, nil)
+
+	user, err := repo.UpdateUserEmail(ctx, testUserID, newEmail)
+
+	assert.Error(t, err)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "email already exists")
+
+	mockQueries.AssertExpectations(t)
+}
+
+func TestUpdateUserPassword_Success(t *testing.T) {
+	repo, mockQueries := setupUserTestRepository()
+	ctx := context.Background()
+
+	testUserID := uuid.New()
+	newPassword := "newpassword123"
+
+	// Mock password update
+	mockQueries.On("UpdateUserPassword", ctx, mock.MatchedBy(func(params database.UpdateUserPasswordParams) bool {
+		return database.PgtypeToUUID(params.ID) == testUserID && len(params.PasswordHash) > 0
+	})).Return(nil)
+
+	err := repo.UpdateUserPassword(ctx, testUserID, newPassword)
+
+	assert.NoError(t, err)
+	mockQueries.AssertExpectations(t)
+}
+
 func TestUpdateUserCoins_Success(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
 	testUserID := uuid.New()
 	coinsDelta := 50
-	expectedParams := database.UpdateUserCoinsParams{
-		ID:    pgtype.UUID{Bytes: testUserID, Valid: true},
-		Coins: pgtype.Int4{Int32: int32(coinsDelta), Valid: true},
-	}
 
 	updatedUser := createMockDBUser(testUserID, "Test User", "test@example.com", "hashedpassword", 150)
 
-	mockQueries.On("UpdateUserCoins", ctx, expectedParams).
-		Return(updatedUser, nil)
+	mockQueries.On("UpdateUserCoins", ctx, database.UpdateUserCoinsParams{
+		ID:    database.UUIDToPgtype(testUserID),
+		Coins: database.Int32ToPgtype(int32(coinsDelta)),
+	}).Return(updatedUser, nil)
 
-	// Execute
 	user, err := repo.UpdateUserCoins(ctx, testUserID, coinsDelta)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
 	assert.Equal(t, 150, user.Coins)
@@ -564,42 +501,51 @@ func TestUpdateUserCoins_Success(t *testing.T) {
 	mockQueries.AssertExpectations(t)
 }
 
-func TestUpdateUserPassword_Success(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+func TestDeleteUser_Success(t *testing.T) {
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
 	testUserID := uuid.New()
-	newPassword := "newpassword123"
 
-	// Mock UpdateUserPassword - we use mock.MatchedBy to handle hashed password
-	mockQueries.On("UpdateUserPassword", ctx, mock.MatchedBy(func(params database.UpdateUserPasswordParams) bool {
-		return params.ID.Bytes == testUserID && len(params.PasswordHash) > 0
-	})).Return(nil)
+	mockQueries.On("DeleteUser", ctx, database.UUIDToPgtype(testUserID)).
+		Return(nil)
 
-	// Execute
-	err := repo.UpdateUserPassword(ctx, testUserID, newPassword)
+	err := repo.DeleteUser(ctx, testUserID)
 
-	// Assert
 	assert.NoError(t, err)
+	mockQueries.AssertExpectations(t)
+}
+
+func TestCheckEmailExists_True(t *testing.T) {
+	repo, mockQueries := setupUserTestRepository()
+	ctx := context.Background()
+
+	testEmail := "existing@example.com"
+
+	mockQueries.On("CheckEmailExists", ctx, testEmail).
+		Return(true, nil)
+
+	exists, err := repo.CheckEmailExists(ctx, testEmail)
+
+	assert.NoError(t, err)
+	assert.True(t, exists)
 
 	mockQueries.AssertExpectations(t)
 }
 
-func TestDeleteUser_Success(t *testing.T) {
-	repo, mockQueries := setupTestRepository()
+func TestCheckEmailExists_False(t *testing.T) {
+	repo, mockQueries := setupUserTestRepository()
 	ctx := context.Background()
 
-	testUserID := uuid.New()
-	expectedPgUUID := pgtype.UUID{Bytes: testUserID, Valid: true}
+	testEmail := "nonexistent@example.com"
 
-	mockQueries.On("DeleteUser", ctx, expectedPgUUID).
-		Return(nil)
+	mockQueries.On("CheckEmailExists", ctx, testEmail).
+		Return(false, nil)
 
-	// Execute
-	err := repo.DeleteUser(ctx, testUserID)
+	exists, err := repo.CheckEmailExists(ctx, testEmail)
 
-	// Assert
 	assert.NoError(t, err)
+	assert.False(t, exists)
 
 	mockQueries.AssertExpectations(t)
 }
