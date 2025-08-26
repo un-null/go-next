@@ -40,7 +40,7 @@ func (a *AuthMiddleware) Middleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.ErrUnauthorized
 		}
 
-		c.Set("userID", userID)
+		c.Set("user_id", userID)
 		return next(c)
 	}
 }
