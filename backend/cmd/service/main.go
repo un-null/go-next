@@ -101,8 +101,8 @@ func main() {
 
 	protected.POST("/coins/charge", coinTransactionHandler.ChargeUserCoins)
 	protected.POST("/coins/spend", coinTransactionHandler.SpendUserCoins)
-	protected.GET("/transactions", coinTransactionHandler.GetUserTransactions)
-	protected.GET("/transactions/:id", coinTransactionHandler.GetTransactionByID)
+	protected.GET("/coins//transactions", coinTransactionHandler.GetUserTransactions)
+	protected.GET("/coins//transactions/:id", coinTransactionHandler.GetTransactionByID)
 
 	cartHandler.RegisterRoutes(protected)
 
