@@ -4,6 +4,7 @@ import (
 	"backend/internal/database"
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/mock"
 )
@@ -152,4 +153,65 @@ func (m *MockCartQueries) GetCartItem(ctx context.Context, userID pgtype.UUID, p
 func (m *MockCartQueries) UpdateCartItemQuantity(ctx context.Context, userID pgtype.UUID, productID int32, quantity int32) error {
 	args := m.Called(ctx, userID, productID, quantity)
 	return args.Error(0)
+}
+
+// CoinTransactionQueriesInterface defines the interface for coin transaction database operations
+type CoinTransactionQueriesInterface interface {
+	CreateCoinTransaction(ctx context.Context, arg database.CreateCoinTransactionParams) (database.CoinTransaction, error)
+	GetCoinTransactionsByUserID(ctx context.Context, arg database.GetCoinTransactionsByUserIDParams) ([]database.CoinTransaction, error)
+	GetCoinTransactionByID(ctx context.Context, id int32) (database.CoinTransaction, error)
+}
+
+// MockCoinTransactionQueries is a mock implementation for coin transaction database operations
+type MockCoinTransactionQueries struct {
+	mock.Mock
+}
+
+func (m *MockCoinTransactionQueries) CreateCoinTransaction(ctx context.Context, arg database.CreateCoinTransactionParams) (database.CoinTransaction, error) {
+	args := m.Called(ctx, arg)
+	return args.Get(0).(database.CoinTransaction), args.Error(1)
+}
+
+func (m *MockCoinTransactionQueries) GetCoinTransactionsByUserID(ctx context.Context, arg database.GetCoinTransactionsByUserIDParams) ([]database.CoinTransaction, error) {
+	args := m.Called(ctx, arg)
+	return args.Get(0).([]database.CoinTransaction), args.Error(1)
+}
+
+func (m *MockCoinTransactionQueries) GetCoinTransactionByID(ctx context.Context, id int32) (database.CoinTransaction, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(database.CoinTransaction), args.Error(1)
+}
+
+// MockTx is a mock implementation for database transactions
+type MockTx struct {
+	mock.Mock
+}
+
+func (m *MockTx) Begin(ctx context.Context) (pgx.Tx, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(pgx.Tx), args.Error(1)
+}
+
+func (m *MockTx) Rollback(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
+func (m *MockTx) Commit(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
+// MockDB is a mock implementation for database pool operations
+type MockDB struct {
+	mock.Mock
+}
+
+func (m *MockDB) Begin(ctx context.Context) (pgx.Tx, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(pgx.Tx), args.Error(1)
+}
+
+func (m *MockDB) Close() {
+	m.Called()
 }
