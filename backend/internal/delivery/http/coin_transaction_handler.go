@@ -162,11 +162,21 @@ func (h *CoinTransactionHandler) GetTransactionByID(c echo.Context) error {
 }
 
 func (h *CoinTransactionHandler) parseUserID(c echo.Context) (uuid.UUID, error) {
-	userIDStr := c.Get("user_id").(string) // From JWT middleware
+	userIDValue := c.Get("user_id")
+	if userIDValue == nil {
+		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "User ID not found in context")
+	}
+
+	userIDStr, ok := userIDValue.(string)
+	if !ok {
+		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError, "User ID is not a string")
+	}
+
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return uuid.Nil, echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID")
+		return uuid.Nil, echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID format")
 	}
+
 	return userID, nil
 }
 

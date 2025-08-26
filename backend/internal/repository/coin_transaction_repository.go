@@ -88,7 +88,6 @@ func (r *coinTransactionRepository) GetTransactionByID(ctx context.Context, id i
 	return dbTransactionToEntity(dbTransaction), nil
 }
 
-// ChargeUserCoins - Add coins to user balance (like purchasing coins with real money)
 func (r *coinTransactionRepository) ChargeUserCoins(ctx context.Context, userID uuid.UUID, amount int, description string, orderID *int32) (*entity.User, *entity.CoinTransaction, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -98,25 +97,22 @@ func (r *coinTransactionRepository) ChargeUserCoins(ctx context.Context, userID 
 
 	txQueries := r.queries.WithTx(tx)
 
-	// Get current user
 	user, err := txQueries.GetUserByID(ctx, database.UUIDToPgtype(userID))
 	if err != nil {
 		return nil, nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	currentCoins := int(database.PgtypeToInt32(user.Coins))
-	newBalance := currentCoins + amount // ADD coins for charging
+	newBalance := currentCoins + amount
 
-	// Update user coins (positive amount)
 	updatedUser, err := txQueries.UpdateUserCoins(ctx, database.UpdateUserCoinsParams{
 		ID:    database.UUIDToPgtype(userID),
-		Coins: database.Int32ToPgtype(int32(amount)), // Positive for addition
+		Coins: database.Int32ToPgtype(int32(amount)),
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to update coins: %w", err)
 	}
 
-	// Create transaction record
 	var orderIDPgtype pgtype.Int4
 	if orderID != nil {
 		orderIDPgtype = database.Int32ToPgtype(*orderID)
@@ -124,8 +120,8 @@ func (r *coinTransactionRepository) ChargeUserCoins(ctx context.Context, userID 
 
 	coinTx, err := txQueries.CreateCoinTransaction(ctx, database.CreateCoinTransactionParams{
 		UserID:          database.UUIDToPgtype(userID),
-		TransactionType: database.TransactionType("CHARGE"),
-		Amount:          int32(amount), // Positive for charge
+		TransactionType: database.TransactionType("charge"),
+		Amount:          int32(amount),
 		BalanceAfter:    int32(newBalance),
 		OrderID:         orderIDPgtype,
 		Description:     pgtype.Text{String: description, Valid: description != ""},
@@ -134,12 +130,10 @@ func (r *coinTransactionRepository) ChargeUserCoins(ctx context.Context, userID 
 		return nil, nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
 
-	// Commit transaction
 	if err := tx.Commit(ctx); err != nil {
 		return nil, nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	// Convert to entities
 	userEntity := &entity.User{
 		ID:        database.PgtypeToUUID(updatedUser.ID),
 		Name:      updatedUser.Name,
@@ -159,7 +153,6 @@ func (r *coinTransactionRepository) ChargeUserCoins(ctx context.Context, userID 
 		CreatedAt:       coinTx.CreatedAt.Time,
 	}
 
-	// Handle nullable OrderID
 	if coinTx.OrderID.Valid {
 		orderID := coinTx.OrderID.Int32
 		transactionEntity.OrderID = &orderID
@@ -168,7 +161,6 @@ func (r *coinTransactionRepository) ChargeUserCoins(ctx context.Context, userID 
 	return userEntity, transactionEntity, nil
 }
 
-// SpendUserCoins - Deduct coins from user balance (like purchasing items with coins)
 func (r *coinTransactionRepository) SpendUserCoins(ctx context.Context, userID uuid.UUID, amount int, description string, orderID *int32) (*entity.User, *entity.CoinTransaction, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -178,29 +170,26 @@ func (r *coinTransactionRepository) SpendUserCoins(ctx context.Context, userID u
 
 	txQueries := r.queries.WithTx(tx)
 
-	// Get current user
 	user, err := txQueries.GetUserByID(ctx, database.UUIDToPgtype(userID))
 	if err != nil {
 		return nil, nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	currentCoins := int(database.PgtypeToInt32(user.Coins))
-	newBalance := currentCoins - amount // SUBTRACT coins for spending
+	newBalance := currentCoins - amount
 
 	if newBalance < 0 {
 		return nil, nil, fmt.Errorf("insufficient coins: have %d, need %d", currentCoins, amount)
 	}
 
-	// Update user coins (negative amount)
 	updatedUser, err := txQueries.UpdateUserCoins(ctx, database.UpdateUserCoinsParams{
 		ID:    database.UUIDToPgtype(userID),
-		Coins: database.Int32ToPgtype(int32(-amount)), // Negative for deduction
+		Coins: database.Int32ToPgtype(int32(-amount)),
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to update coins: %w", err)
 	}
 
-	// Create transaction record
 	var orderIDPgtype pgtype.Int4
 	if orderID != nil {
 		orderIDPgtype = database.Int32ToPgtype(*orderID)
@@ -208,8 +197,8 @@ func (r *coinTransactionRepository) SpendUserCoins(ctx context.Context, userID u
 
 	coinTx, err := txQueries.CreateCoinTransaction(ctx, database.CreateCoinTransactionParams{
 		UserID:          database.UUIDToPgtype(userID),
-		TransactionType: database.TransactionType("SPEND"),
-		Amount:          int32(-amount), // Negative for spend
+		TransactionType: database.TransactionType("purchase"),
+		Amount:          int32(-amount),
 		BalanceAfter:    int32(newBalance),
 		OrderID:         orderIDPgtype,
 		Description:     pgtype.Text{String: description, Valid: description != ""},
@@ -218,12 +207,10 @@ func (r *coinTransactionRepository) SpendUserCoins(ctx context.Context, userID u
 		return nil, nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
 
-	// Commit transaction
 	if err := tx.Commit(ctx); err != nil {
 		return nil, nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	// Convert to entities
 	userEntity := &entity.User{
 		ID:        database.PgtypeToUUID(updatedUser.ID),
 		Name:      updatedUser.Name,
@@ -243,7 +230,6 @@ func (r *coinTransactionRepository) SpendUserCoins(ctx context.Context, userID u
 		CreatedAt:       coinTx.CreatedAt.Time,
 	}
 
-	// Handle nullable OrderID
 	if coinTx.OrderID.Valid {
 		orderID := coinTx.OrderID.Int32
 		transactionEntity.OrderID = &orderID
@@ -263,7 +249,6 @@ func dbTransactionToEntity(dbTx database.CoinTransaction) *entity.CoinTransactio
 		CreatedAt:       dbTx.CreatedAt.Time,
 	}
 
-	// Handle nullable OrderID
 	if dbTx.OrderID.Valid {
 		orderID := dbTx.OrderID.Int32
 		transaction.OrderID = &orderID
