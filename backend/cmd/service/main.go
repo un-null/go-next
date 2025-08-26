@@ -40,6 +40,7 @@ func main() {
 	defer dbService.Close()
 
 	queries := dbService.Queries()
+	db := dbService.DB()
 
 	e := echo.New()
 
@@ -56,7 +57,7 @@ func main() {
 	// DI
 	authMiddleware := http.NewAuthMiddleware(jwtSecret)
 
-	userRepo := repository.NewUserRepository(queries)
+	userRepo := repository.NewUserRepository(queries, db)
 	userUC := usecase.NewUserUseCase(userRepo)
 
 	productRepo := repository.NewProductRepository(queries)
@@ -68,10 +69,14 @@ func main() {
 	categoryRepo := repository.NewCategoryRepository(queries)
 	categoryUC := usecase.NewCategoryUseCase(categoryRepo)
 
+	coinTransactionRepo := repository.NewCoinTransactionRepository(queries, db)
+	coinTransactionUC := usecase.NewCoinTransactionUseCase(coinTransactionRepo)
+
 	userHandler := http.NewUserHandler(userUC, jwtSecret)
 	productHandler := http.NewProductHandler(productUC)
 	cartHandler := http.NewCartHandler(cartUC)
 	categoryHandler := http.NewCategoryHandler(categoryUC)
+	coinTransactionHandler := http.NewCoinTransactionHandler(coinTransactionUC)
 
 	// Route groupin
 
@@ -93,6 +98,11 @@ func main() {
 	protected.PATCH("/users/:id/password", userHandler.ChangePassword)
 	protected.PATCH("/users/:id/coins", userHandler.UpdateUserCoins)
 	protected.DELETE("/users/:id", userHandler.DeleteUser)
+
+	protected.POST("/coins/charge", coinTransactionHandler.ChargeUserCoins)
+	protected.POST("/coins/spend", coinTransactionHandler.SpendUserCoins)
+	protected.GET("/transactions", coinTransactionHandler.GetUserTransactions)
+	protected.GET("/transactions/:id", coinTransactionHandler.GetTransactionByID)
 
 	cartHandler.RegisterRoutes(protected)
 
