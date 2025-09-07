@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,6 +15,9 @@ type OrderItemRepository interface {
 	GetOrderItemById(ctx context.Context, id int) (*entity.OrderItem, error)
 	GetOrderItemsByOrderID(ctx context.Context, orderID int) ([]entity.OrderItem, error)
 	CreateOrderItem(ctx context.Context, req entity.OrderItem) (*entity.OrderItem, error)
+
+	CreateOrderItemWithTx(ctx context.Context, tx pgx.Tx, req entity.OrderItem) (*entity.OrderItem, error)
+	CreateOrderItemsWithTx(ctx context.Context, tx pgx.Tx, items []entity.OrderItem) ([]entity.OrderItem, error)
 }
 
 type orderItemRepository struct {
@@ -100,4 +104,56 @@ func (r *orderItemRepository) CreateOrderItem(ctx context.Context, req entity.Or
 	}
 
 	return item, nil
+}
+
+func (r *orderItemRepository) CreateOrderItemWithTx(ctx context.Context, tx pgx.Tx, req entity.OrderItem) (*entity.OrderItem, error) {
+	// Create queries instance with transaction
+	txQueries := r.queries.WithTx(tx)
+
+	// Ensure subtotal is always calculated in Go before inserting
+	subtotal := req.CalculateSubtotal()
+
+	dbItem, err := txQueries.CreateOrderItem(ctx, database.CreateOrderItemParams{
+		OrderID:      int32(req.OrderID),
+		ProductID:    int32(req.ProductID),
+		ProductName:  req.ProductName,
+		ProductPrice: database.Float64ToNumeric(req.ProductPrice),
+		Quantity:     int32(req.Quantity),
+		Subtotal:     database.Float64ToNumeric(subtotal),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return r.dbOrderItemToEntity(dbItem), nil
+}
+
+func (r *orderItemRepository) CreateOrderItemsWithTx(ctx context.Context, tx pgx.Tx, items []entity.OrderItem) ([]entity.OrderItem, error) {
+	if len(items) == 0 {
+		return []entity.OrderItem{}, nil
+	}
+
+	createdItems := make([]entity.OrderItem, 0, len(items))
+
+	for _, item := range items {
+		createdItem, err := r.CreateOrderItemWithTx(ctx, tx, item)
+		if err != nil {
+			return nil, err
+		}
+		createdItems = append(createdItems, *createdItem)
+	}
+
+	return createdItems, nil
+}
+
+func (r *orderItemRepository) dbOrderItemToEntity(dbItem database.OrderItem) *entity.OrderItem {
+	return &entity.OrderItem{
+		ID:           int(dbItem.ID),
+		OrderID:      int(dbItem.OrderID),
+		ProductID:    int(dbItem.ProductID),
+		ProductName:  dbItem.ProductName,
+		ProductPrice: database.NumericToFloat64(dbItem.ProductPrice),
+		Quantity:     int(dbItem.Quantity),
+		Subtotal:     database.NumericToFloat64(dbItem.Subtotal),
+	}
 }

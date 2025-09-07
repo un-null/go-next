@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type CartRepository interface {
@@ -15,15 +17,19 @@ type CartRepository interface {
 	GetCartItems(ctx context.Context, userID uuid.UUID) ([]entity.CartItem, error)
 	RemoveFromCart(ctx context.Context, userID uuid.UUID, productID int) error
 	ClearCart(ctx context.Context, userID uuid.UUID) error
+
+	ClearCartWithTx(ctx context.Context, tx pgx.Tx, userID uuid.UUID) error
 }
 
 type cartRepository struct {
 	queries *database.Queries
+	db      *pgxpool.Pool
 }
 
-func NewCartRepository(queries *database.Queries) CartRepository {
+func NewCartRepository(queries *database.Queries, db *pgxpool.Pool) CartRepository {
 	return &cartRepository{
 		queries: queries,
+		db:      db,
 	}
 }
 
@@ -100,6 +106,18 @@ func (r *cartRepository) ClearCart(ctx context.Context, userID uuid.UUID) error 
 	}
 
 	return err
+}
+
+func (r *cartRepository) ClearCartWithTx(ctx context.Context, tx pgx.Tx, userID uuid.UUID) error {
+	// Create queries instance with transaction
+	txQueries := r.queries.WithTx(tx)
+
+	err := txQueries.DeleteAllCartItemsByUser(ctx, database.UUIDToPgtype(userID))
+	if err != nil {
+		return fmt.Errorf("failed to clear cart: %w", err)
+	}
+
+	return nil
 }
 
 func dbCartItemToEntity(dbItem database.CartItem) *entity.CartItem {

@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -15,6 +16,7 @@ type OrderRepository interface {
 	GetOrderById(ctx context.Context, id int) (*entity.Order, error)
 	GetOrdersByUserID(ctx context.Context, userID uuid.UUID) ([]entity.Order, error)
 	CreateOrder(ctx context.Context, req entity.CreateOrderRequest) (*entity.Order, error)
+	CreateOrderWithTx(ctx context.Context, tx pgx.Tx, req entity.CreateOrderRequest) (*entity.Order, error)
 }
 
 type orderRepository struct {
@@ -77,20 +79,39 @@ func (r *orderRepository) GetOrdersByUserID(ctx context.Context, userID uuid.UUI
 }
 
 func (r *orderRepository) CreateOrder(ctx context.Context, req entity.CreateOrderRequest) (*entity.Order, error) {
-	status := "success"
-
 	dbOrder, err := r.queries.CreateOrder(ctx, database.CreateOrderParams{
 		UserID:         database.UUIDToPgtype(req.UserID),
 		OrderNumber:    req.OrderNumber,
 		TotalAmount:    database.Float64ToNumeric(req.TotalAmount),
 		TotalCoinsUsed: int32(req.TotalCoinsUsed),
-		Status:         database.StringToNullOrderStatus(status),
+		Status:         database.StringToNullOrderStatus(string(req.Status)),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	order := &entity.Order{
+	return r.dbOrderToEntity(dbOrder), nil
+}
+
+func (r *orderRepository) CreateOrderWithTx(ctx context.Context, tx pgx.Tx, req entity.CreateOrderRequest) (*entity.Order, error) {
+	txQueries := r.queries.WithTx(tx)
+
+	dbOrder, err := txQueries.CreateOrder(ctx, database.CreateOrderParams{
+		UserID:         database.UUIDToPgtype(req.UserID),
+		OrderNumber:    req.OrderNumber,
+		TotalAmount:    database.Float64ToNumeric(req.TotalAmount),
+		TotalCoinsUsed: int32(req.TotalCoinsUsed),
+		Status:         database.StringToNullOrderStatus(string(req.Status)),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return r.dbOrderToEntity(dbOrder), nil
+}
+
+func (r *orderRepository) dbOrderToEntity(dbOrder database.Order) *entity.Order {
+	return &entity.Order{
 		ID:             int(dbOrder.ID),
 		UserID:         database.PgtypeToUUID(dbOrder.UserID),
 		OrderNumber:    dbOrder.OrderNumber,
@@ -100,6 +121,4 @@ func (r *orderRepository) CreateOrder(ctx context.Context, req entity.CreateOrde
 		CreatedAt:      dbOrder.CreatedAt.Time,
 		UpdatedAt:      dbOrder.UpdatedAt.Time,
 	}
-
-	return order, nil
 }
