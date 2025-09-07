@@ -22,11 +22,17 @@ type CartRepository interface {
 }
 
 type cartRepository struct {
-	queries *database.Queries
+	queries CartQuerier
 	db      *pgxpool.Pool
 }
 
-func NewCartRepository(queries *database.Queries, db *pgxpool.Pool) CartRepository {
+// CartQuerier abstracts the database access needed by this repository, including transaction support.
+type CartQuerier interface {
+	database.Querier
+	WithTx(tx pgx.Tx) *database.Queries
+}
+
+func NewCartRepository(queries CartQuerier, db *pgxpool.Pool) CartRepository {
 	return &cartRepository{
 		queries: queries,
 		db:      db,

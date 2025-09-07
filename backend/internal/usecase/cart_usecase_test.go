@@ -9,6 +9,7 @@ import (
 	"backend/internal/entity"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -40,6 +41,11 @@ func (m *MockCartRepository) RemoveFromCart(ctx context.Context, userID uuid.UUI
 
 func (m *MockCartRepository) ClearCart(ctx context.Context, userID uuid.UUID) error {
 	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockCartRepository) ClearCartWithTx(ctx context.Context, tx pgx.Tx, userID uuid.UUID) error {
+	args := m.Called(ctx, tx, userID)
 	return args.Error(0)
 }
 
