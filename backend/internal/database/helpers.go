@@ -2,6 +2,7 @@
 package database
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/google/uuid"
@@ -68,4 +69,29 @@ func NumericToFloat64(num pgtype.Numeric) float64 {
 
 	f, _ := num.Float64Value()
 	return f.Float64
+}
+
+func NullOrderStatusToString(nos NullOrderStatus) string {
+	if !nos.Valid {
+		return ""
+	}
+	return string(nos.OrderStatus)
+}
+
+func Float64ToNumeric(f float64) pgtype.Numeric {
+	return pgtype.Numeric{
+		Int:   big.NewInt(int64(f * 100)),
+		Exp:   -2,
+		Valid: true,
+	}
+}
+
+func StringToNullOrderStatus(s string) NullOrderStatus {
+	if s == "" {
+		return NullOrderStatus{Valid: false}
+	}
+	return NullOrderStatus{
+		OrderStatus: OrderStatus(s),
+		Valid:       true,
+	}
 }
