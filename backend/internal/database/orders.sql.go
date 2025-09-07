@@ -104,33 +104,3 @@ func (q *Queries) GetOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]
 	}
 	return items, nil
 }
-
-const updateOrderStatus = `-- name: UpdateOrderStatus :one
-UPDATE "orders"
-SET 
-    status = $2,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
-RETURNING id, user_id, order_number, total_amount, total_coins_used, status, created_at, updated_at
-`
-
-type UpdateOrderStatusParams struct {
-	ID     int32           `db:"id" json:"id"`
-	Status NullOrderStatus `db:"status" json:"status"`
-}
-
-func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) (Order, error) {
-	row := q.db.QueryRow(ctx, updateOrderStatus, arg.ID, arg.Status)
-	var i Order
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.OrderNumber,
-		&i.TotalAmount,
-		&i.TotalCoinsUsed,
-		&i.Status,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
