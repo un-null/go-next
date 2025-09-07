@@ -63,7 +63,7 @@ func main() {
 	productRepo := repository.NewProductRepository(queries)
 	productUC := usecase.NewProductUseCase(productRepo)
 
-	cartRepo := repository.NewCartRepository(queries)
+	cartRepo := repository.NewCartRepository(queries, db)
 	cartUC := usecase.NewCartUseCase(cartRepo)
 
 	categoryRepo := repository.NewCategoryRepository(queries)
@@ -72,13 +72,13 @@ func main() {
 	coinTransactionRepo := repository.NewCoinTransactionRepository(queries, db)
 	coinTransactionUC := usecase.NewCoinTransactionUseCase(coinTransactionRepo)
 
-	orderRepo := repository.NewOrderRepository(queries, db)
-	orderUC := usecase.NewOrderUsecase(orderRepo)
-	orderHandler := http.NewOrderHandler(orderUC)
-
 	orderItemRepo := repository.NewOrderItemRepository(queries, db)
 	orderItemUC := usecase.NewOrderItemUsecase(orderItemRepo)
 	orderItemHandler := http.NewOrderItemHandler(orderItemUC)
+
+	orderRepo := repository.NewOrderRepository(queries, db)
+	orderUC := usecase.NewOrderUsecase(orderRepo, orderItemRepo, cartRepo, productRepo, db)
+	orderHandler := http.NewOrderHandler(orderUC)
 
 	userHandler := http.NewUserHandler(userUC, jwtSecret)
 	productHandler := http.NewProductHandler(productUC)
