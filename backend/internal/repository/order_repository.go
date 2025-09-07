@@ -9,8 +9,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// OrderQuerier defines the minimal methods the repository needs from database layer
+type OrderQuerier interface {
+	GetOrderByID(ctx context.Context, id int32) (database.Order, error)
+	GetOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]database.Order, error)
+	CreateOrder(ctx context.Context, arg database.CreateOrderParams) (database.Order, error)
+	WithTx(tx pgx.Tx) *database.Queries
+}
 
 type OrderRepository interface {
 	GetOrderById(ctx context.Context, id int) (*entity.Order, error)
@@ -20,11 +29,11 @@ type OrderRepository interface {
 }
 
 type orderRepository struct {
-	queries *database.Queries
+	queries OrderQuerier
 	db      *pgxpool.Pool
 }
 
-func NewOrderRepository(queries *database.Queries, db *pgxpool.Pool) OrderRepository {
+func NewOrderRepository(queries OrderQuerier, db *pgxpool.Pool) OrderRepository {
 	return &orderRepository{
 		queries: queries,
 		db:      db,
