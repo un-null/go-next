@@ -20,12 +20,21 @@ type OrderItemRepository interface {
 	CreateOrderItemsWithTx(ctx context.Context, tx pgx.Tx, items []entity.OrderItem) ([]entity.OrderItem, error)
 }
 
+// OrderItemQuerier defines the minimal methods required from the database layer
+// for order item repository operations
+type OrderItemQuerier interface {
+	GetOrderItemByID(ctx context.Context, id int32) (database.OrderItem, error)
+	GetOrderItemsByOrderID(ctx context.Context, orderID int32) ([]database.OrderItem, error)
+	CreateOrderItem(ctx context.Context, arg database.CreateOrderItemParams) (database.OrderItem, error)
+	WithTx(tx pgx.Tx) *database.Queries
+}
+
 type orderItemRepository struct {
-	queries *database.Queries
+	queries OrderItemQuerier
 	db      *pgxpool.Pool
 }
 
-func NewOrderItemRepository(queries *database.Queries, db *pgxpool.Pool) OrderItemRepository {
+func NewOrderItemRepository(queries OrderItemQuerier, db *pgxpool.Pool) OrderItemRepository {
 	return &orderItemRepository{
 		queries: queries,
 		db:      db,
