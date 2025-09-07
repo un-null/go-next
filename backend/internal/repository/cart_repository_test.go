@@ -2,129 +2,17 @@ package repository
 
 import (
 	"backend/internal/database"
+	"backend/mocks"
 	"context"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
-
-// MockQuerier is a mock for database.Querier
-type MockQuerier struct {
-	mock.Mock
-}
-
-// Implement all methods of the database.Querier interface
-func (m *MockQuerier) CheckCartItemExists(ctx context.Context, arg database.CheckCartItemExistsParams) (bool, error) {
-	args := m.Called(ctx, arg)
-	return args.Bool(0), args.Error(1)
-}
-
-func (m *MockQuerier) CreateCartItem(ctx context.Context, arg database.CreateCartItemParams) (database.CartItem, error) {
-	args := m.Called(ctx, arg)
-	return args.Get(0).(database.CartItem), args.Error(1)
-}
-
-func (m *MockQuerier) UpdateCartItemQuantity(ctx context.Context, arg database.UpdateCartItemQuantityParams) (database.CartItem, error) {
-	args := m.Called(ctx, arg)
-	return args.Get(0).(database.CartItem), args.Error(1)
-}
-
-func (m *MockQuerier) GetCartItemsByUser(ctx context.Context, userID pgtype.UUID) ([]database.CartItem, error) {
-	args := m.Called(ctx, userID)
-	return args.Get(0).([]database.CartItem), args.Error(1)
-}
-
-func (m *MockQuerier) DeleteCartItem(ctx context.Context, arg database.DeleteCartItemParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
-
-func (m *MockQuerier) DeleteAllCartItemsByUser(ctx context.Context, userID pgtype.UUID) error {
-	args := m.Called(ctx, userID)
-	return args.Error(0)
-}
-
-// Add empty implementations for all other Querier methods to satisfy the interface
-func (m *MockQuerier) CheckEmailExists(ctx context.Context, email string) (bool, error) {
-	return false, nil
-}
-func (m *MockQuerier) CheckEmailExistsForOtherUser(ctx context.Context, arg database.CheckEmailExistsForOtherUserParams) (bool, error) {
-	return false, nil
-}
-func (m *MockQuerier) CreateCoinTransaction(ctx context.Context, arg database.CreateCoinTransactionParams) (database.CoinTransaction, error) {
-	return database.CoinTransaction{}, nil
-}
-func (m *MockQuerier) CreateOrder(ctx context.Context, arg database.CreateOrderParams) (database.Order, error) {
-	return database.Order{}, nil
-}
-func (m *MockQuerier) CreateOrderItem(ctx context.Context, arg database.CreateOrderItemParams) (database.OrderItem, error) {
-	return database.OrderItem{}, nil
-}
-func (m *MockQuerier) CreateUser(ctx context.Context, arg database.CreateUserParams) (database.CreateUserRow, error) {
-	return database.CreateUserRow{}, nil
-}
-func (m *MockQuerier) DeleteUser(ctx context.Context, id pgtype.UUID) error { return nil }
-func (m *MockQuerier) GetAllCategories(ctx context.Context) ([]database.Category, error) {
-	return nil, nil
-}
-func (m *MockQuerier) GetCategoryByID(ctx context.Context, id int32) (database.Category, error) {
-	return database.Category{}, nil
-}
-func (m *MockQuerier) GetCoinTransactionByID(ctx context.Context, id int32) (database.CoinTransaction, error) {
-	return database.CoinTransaction{}, nil
-}
-func (m *MockQuerier) GetCoinTransactionsByUserID(ctx context.Context, arg database.GetCoinTransactionsByUserIDParams) ([]database.CoinTransaction, error) {
-	return nil, nil
-}
-func (m *MockQuerier) GetOrderByID(ctx context.Context, id int32) (database.Order, error) {
-	return database.Order{}, nil
-}
-func (m *MockQuerier) GetOrderItemByID(ctx context.Context, id int32) (database.OrderItem, error) {
-	return database.OrderItem{}, nil
-}
-func (m *MockQuerier) GetOrderItemsByOrderID(ctx context.Context, orderID int32) ([]database.OrderItem, error) {
-	return nil, nil
-}
-func (m *MockQuerier) GetOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]database.Order, error) {
-	return nil, nil
-}
-func (m *MockQuerier) GetProductByID(ctx context.Context, id int32) (database.Product, error) {
-	return database.Product{}, nil
-}
-func (m *MockQuerier) GetUserByEmail(ctx context.Context, email string) (database.User, error) {
-	return database.User{}, nil
-}
-func (m *MockQuerier) GetUserByID(ctx context.Context, id pgtype.UUID) (database.User, error) {
-	return database.User{}, nil
-}
-func (m *MockQuerier) ListProducts(ctx context.Context, arg database.ListProductsParams) ([]database.Product, error) {
-	return nil, nil
-}
-func (m *MockQuerier) ListProductsByCategory(ctx context.Context, arg database.ListProductsByCategoryParams) ([]database.Product, error) {
-	return nil, nil
-}
-func (m *MockQuerier) UpdateProductStock(ctx context.Context, arg database.UpdateProductStockParams) (database.Product, error) {
-	return database.Product{}, nil
-}
-func (m *MockQuerier) UpdateUserCoins(ctx context.Context, arg database.UpdateUserCoinsParams) (database.UpdateUserCoinsRow, error) {
-	return database.UpdateUserCoinsRow{}, nil
-}
-func (m *MockQuerier) UpdateUserEmail(ctx context.Context, arg database.UpdateUserEmailParams) (database.UpdateUserEmailRow, error) {
-	return database.UpdateUserEmailRow{}, nil
-}
-func (m *MockQuerier) UpdateUserName(ctx context.Context, arg database.UpdateUserNameParams) (database.UpdateUserNameRow, error) {
-	return database.UpdateUserNameRow{}, nil
-}
-func (m *MockQuerier) UpdateUserPassword(ctx context.Context, arg database.UpdateUserPasswordParams) error {
-	return nil
-}
-func (m *MockQuerier) WithTx(tx pgx.Tx) *database.Queries { return database.New(tx) }
 
 // Helper functions for tests
 func createMockDBCartItem(id int32, userID uuid.UUID, productID int32, quantity int32) database.CartItem {
@@ -138,8 +26,8 @@ func createMockDBCartItem(id int32, userID uuid.UUID, productID int32, quantity 
 	}
 }
 
-func setupCartTest(t *testing.T) (CartRepository, *MockQuerier) {
-	mockQuerier := new(MockQuerier)
+func setupCartTest(t *testing.T) (CartRepository, *mocks.MockCartQuerier) {
+	mockQuerier := new(mocks.MockCartQuerier)
 	repo := NewCartRepository(mockQuerier, nil)
 	return repo, mockQuerier
 }

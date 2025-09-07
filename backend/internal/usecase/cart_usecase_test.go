@@ -7,47 +7,11 @@ import (
 	"time"
 
 	"backend/internal/entity"
+	"backend/mocks"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-// ---- Mock Repository ----
-
-// MockCartRepository is a mock implementation of repository.CartRepository
-type MockCartRepository struct {
-	mock.Mock
-}
-
-func (m *MockCartRepository) AddToCart(ctx context.Context, userID uuid.UUID, productID int, quantity int) error {
-	args := m.Called(ctx, userID, productID, quantity)
-	return args.Error(0)
-}
-
-func (m *MockCartRepository) GetCartItems(ctx context.Context, userID uuid.UUID) ([]entity.CartItem, error) {
-	args := m.Called(ctx, userID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]entity.CartItem), args.Error(1)
-}
-
-func (m *MockCartRepository) RemoveFromCart(ctx context.Context, userID uuid.UUID, productID int) error {
-	args := m.Called(ctx, userID, productID)
-	return args.Error(0)
-}
-
-func (m *MockCartRepository) ClearCart(ctx context.Context, userID uuid.UUID) error {
-	args := m.Called(ctx, userID)
-	return args.Error(0)
-}
-
-func (m *MockCartRepository) ClearCartWithTx(ctx context.Context, tx pgx.Tx, userID uuid.UUID) error {
-	args := m.Called(ctx, tx, userID)
-	return args.Error(0)
-}
 
 // ---- Helper Functions ----
 
@@ -65,7 +29,7 @@ func sampleEntityCartItem(userID uuid.UUID, productID int, quantity int) entity.
 // ---- Tests ----
 
 func TestCartUseCase_AddToCart_Success(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -82,7 +46,7 @@ func TestCartUseCase_AddToCart_Success(t *testing.T) {
 }
 
 func TestCartUseCase_AddToCart_Error(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -101,7 +65,7 @@ func TestCartUseCase_AddToCart_Error(t *testing.T) {
 }
 
 func TestCartUseCase_GetCartItems_Success(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -130,7 +94,7 @@ func TestCartUseCase_GetCartItems_Success(t *testing.T) {
 }
 
 func TestCartUseCase_GetCartItems_Empty(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -148,7 +112,7 @@ func TestCartUseCase_GetCartItems_Empty(t *testing.T) {
 }
 
 func TestCartUseCase_GetCartItems_Error(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -167,7 +131,7 @@ func TestCartUseCase_GetCartItems_Error(t *testing.T) {
 }
 
 func TestCartUseCase_RemoveFromCart_Success(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -183,7 +147,7 @@ func TestCartUseCase_RemoveFromCart_Success(t *testing.T) {
 }
 
 func TestCartUseCase_RemoveFromCart_Error(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -202,7 +166,7 @@ func TestCartUseCase_RemoveFromCart_Error(t *testing.T) {
 }
 
 func TestCartUseCase_ClearCart_Success(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -217,7 +181,7 @@ func TestCartUseCase_ClearCart_Success(t *testing.T) {
 }
 
 func TestCartUseCase_ClearCart_Error(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -237,7 +201,7 @@ func TestCartUseCase_ClearCart_Error(t *testing.T) {
 // ---- Edge Cases and Additional Tests ----
 
 func TestCartUseCase_AddToCart_ZeroQuantity(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -254,7 +218,7 @@ func TestCartUseCase_AddToCart_ZeroQuantity(t *testing.T) {
 }
 
 func TestCartUseCase_AddToCart_NegativeQuantity(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -271,7 +235,7 @@ func TestCartUseCase_AddToCart_NegativeQuantity(t *testing.T) {
 }
 
 func TestCartUseCase_Operations_WithEmptyUUID(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 	useCase := NewCartUseCase(mockRepo)
 
 	ctx := context.Background()
@@ -302,7 +266,7 @@ func TestCartUseCase_Operations_WithEmptyUUID(t *testing.T) {
 }
 
 func TestCartUseCase_Constructor(t *testing.T) {
-	mockRepo := new(MockCartRepository)
+	mockRepo := new(mocks.MockCartRepository)
 
 	useCase := NewCartUseCase(mockRepo)
 
