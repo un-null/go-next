@@ -19,7 +19,7 @@ export default function UserPage() {
 
   return (
     <main className="p-4">
-      <h1 className="text-2xl font-bold">Users</h1>
+      <h1 className="font-bold text-2xl">Users</h1>
       <ul className="mt-2 list-disc pl-5">
         {users.map((user) => (
           <li key={user.id}>
