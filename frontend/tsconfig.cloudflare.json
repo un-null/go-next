@@ -5,7 +5,7 @@
     "app/**/*",
     "app/**/.server/**/*",
     "app/**/.client/**/*",
-    "workers/**/*",
+    "src/**/*",
     "worker-configuration.d.ts"
   ],
   "compilerOptions": {
@@ -20,7 +20,8 @@
     "baseUrl": ".",
     "rootDirs": [".", "./.react-router/types"],
     "paths": {
-      "~/*": ["./app/*"]
+      "~/*": ["./app/*"],
+      "@/*": ["./src/*"]
     },
     "esModuleInterop": true,
     "resolveJsonModule": true
