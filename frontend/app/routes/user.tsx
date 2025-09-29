@@ -6,27 +6,20 @@ type User = {
 };
 
 // Loader to fetch user data
-export async function loader() {
-  const res = await fetch("http://localhost:8080/users");
-  if (!res.ok) {
-    throw new Response("Failed to fetch users", { status: res.status });
-  }
-  return res.json();
-}
+// export async function loader() {
+//   const res = await fetch("http://localhost:8080/users");
+//   if (!res.ok) {
+//     throw new Response("Failed to fetch users", { status: res.status });
+//   }
+//   return res.json();
+// }
 
 export default function UserPage() {
-  const users = useLoaderData() as User[];
+  // const users = useLoaderData() as User[];
 
   return (
     <main className="p-4">
       <h1 className="font-bold text-2xl">Users</h1>
-      <ul className="mt-2 list-disc pl-5">
-        {users.map((user) => (
-          <li key={user.id}>
-            {user.id}. {user.name}
-          </li>
-        ))}
-      </ul>
     </main>
   );
 }
