@@ -182,6 +182,6 @@ func TestAddToCart_DatabaseError(t *testing.T) {
 
 	// Assert
 	assert.Error(t, err)
-	assert.Equal(t, "cart is empty", err.Error())
+	assert.Contains(t, err.Error(), "db connection failed")
 	mockQuerier.AssertExpectations(t)
 }

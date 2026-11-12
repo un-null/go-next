@@ -176,6 +176,9 @@ func (m *MockCoinTransactionQueries) CreateCoinTransaction(ctx context.Context, 
 
 func (m *MockCoinTransactionQueries) GetCoinTransactionsByUserID(ctx context.Context, arg database.GetCoinTransactionsByUserIDParams) ([]database.CoinTransaction, error) {
 	args := m.Called(ctx, arg)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).([]database.CoinTransaction), args.Error(1)
 }
 
