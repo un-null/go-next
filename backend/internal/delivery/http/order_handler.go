@@ -30,12 +30,17 @@ func (h *OrderHandler) RegisterRoutes(g *echo.Group) {
 func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	ctx := c.Request().Context()
 
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+	}
+
 	req := new(entity.CreateOrderRequest)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
-	order, err := h.orderUsecase.CreateOrder(ctx, *req)
+	order, err := h.orderUsecase.CreateOrder(ctx, userID, *req)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}

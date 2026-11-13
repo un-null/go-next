@@ -94,7 +94,7 @@ func TestCreateOrder_Success(t *testing.T) {
 	ctx := context.Background()
 
 	userID := uuid.New()
-	req := entity.CreateOrderRequest{
+	params := entity.CreateOrderParams{
 		UserID:         userID,
 		OrderNumber:    "ORD125",
 		TotalAmount:    200.5,
@@ -105,7 +105,7 @@ func TestCreateOrder_Success(t *testing.T) {
 	dbOrder := createMockDBOrder(3, userID, "ORD125", 200.5, 20, "PAID")
 	mockQuerier.On("CreateOrder", ctx, mock.Anything).Return(dbOrder, nil)
 
-	order, err := repo.CreateOrder(ctx, req)
+	order, err := repo.CreateOrder(ctx, params)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 3, order.ID)
@@ -121,7 +121,7 @@ func TestCreateOrderWithTx_Success(t *testing.T) {
 	ctx := context.Background()
 
 	userID := uuid.New()
-	req := entity.CreateOrderRequest{
+	params := entity.CreateOrderParams{
 		UserID:         userID,
 		OrderNumber:    "ORD126",
 		TotalAmount:    300.5,
@@ -133,7 +133,7 @@ func TestCreateOrderWithTx_Success(t *testing.T) {
 	mockTx := new(pgx.Tx) // placeholder; will not actually execute SQL
 	mockQuerier.On("CreateOrder", ctx, mock.Anything).Return(dbOrder, nil)
 
-	order, err := repo.CreateOrderWithTx(ctx, *mockTx, req)
+	order, err := repo.CreateOrderWithTx(ctx, *mockTx, params)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, order.ID)

@@ -24,8 +24,8 @@ type OrderQuerier interface {
 type OrderRepository interface {
 	GetOrderById(ctx context.Context, id int) (*entity.Order, error)
 	GetOrdersByUserID(ctx context.Context, userID uuid.UUID) ([]entity.Order, error)
-	CreateOrder(ctx context.Context, req entity.CreateOrderRequest) (*entity.Order, error)
-	CreateOrderWithTx(ctx context.Context, tx pgx.Tx, req entity.CreateOrderRequest) (*entity.Order, error)
+	CreateOrder(ctx context.Context, params entity.CreateOrderParams) (*entity.Order, error)
+	CreateOrderWithTx(ctx context.Context, tx pgx.Tx, params entity.CreateOrderParams) (*entity.Order, error)
 }
 
 type orderRepository struct {
@@ -87,13 +87,13 @@ func (r *orderRepository) GetOrdersByUserID(ctx context.Context, userID uuid.UUI
 	return orders, nil
 }
 
-func (r *orderRepository) CreateOrder(ctx context.Context, req entity.CreateOrderRequest) (*entity.Order, error) {
+func (r *orderRepository) CreateOrder(ctx context.Context, params entity.CreateOrderParams) (*entity.Order, error) {
 	dbOrder, err := r.queries.CreateOrder(ctx, database.CreateOrderParams{
-		UserID:         database.UUIDToPgtype(req.UserID),
-		OrderNumber:    req.OrderNumber,
-		TotalAmount:    database.Float64ToNumeric(req.TotalAmount),
-		TotalCoinsUsed: int32(req.TotalCoinsUsed),
-		Status:         database.StringToNullOrderStatus(string(req.Status)),
+		UserID:         database.UUIDToPgtype(params.UserID),
+		OrderNumber:    params.OrderNumber,
+		TotalAmount:    database.Float64ToNumeric(params.TotalAmount),
+		TotalCoinsUsed: int32(params.TotalCoinsUsed),
+		Status:         database.StringToNullOrderStatus(string(params.Status)),
 	})
 	if err != nil {
 		return nil, err
@@ -102,15 +102,15 @@ func (r *orderRepository) CreateOrder(ctx context.Context, req entity.CreateOrde
 	return r.dbOrderToEntity(dbOrder), nil
 }
 
-func (r *orderRepository) CreateOrderWithTx(ctx context.Context, tx pgx.Tx, req entity.CreateOrderRequest) (*entity.Order, error) {
+func (r *orderRepository) CreateOrderWithTx(ctx context.Context, tx pgx.Tx, params entity.CreateOrderParams) (*entity.Order, error) {
 	txQueries := r.queries.WithTx(tx)
 
 	dbOrder, err := txQueries.CreateOrder(ctx, database.CreateOrderParams{
-		UserID:         database.UUIDToPgtype(req.UserID),
-		OrderNumber:    req.OrderNumber,
-		TotalAmount:    database.Float64ToNumeric(req.TotalAmount),
-		TotalCoinsUsed: int32(req.TotalCoinsUsed),
-		Status:         database.StringToNullOrderStatus(string(req.Status)),
+		UserID:         database.UUIDToPgtype(params.UserID),
+		OrderNumber:    params.OrderNumber,
+		TotalAmount:    database.Float64ToNumeric(params.TotalAmount),
+		TotalCoinsUsed: int32(params.TotalCoinsUsed),
+		Status:         database.StringToNullOrderStatus(string(params.Status)),
 	})
 	if err != nil {
 		return nil, err
