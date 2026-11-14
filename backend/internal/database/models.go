@@ -123,16 +123,6 @@ type CoinTransaction struct {
 	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
 }
 
-type Comment struct {
-	ID        int32              `db:"id" json:"id"`
-	UserID    pgtype.UUID        `db:"user_id" json:"user_id"`
-	ProductID int32              `db:"product_id" json:"product_id"`
-	Rating    pgtype.Int4        `db:"rating" json:"rating"`
-	Comment   string             `db:"comment" json:"comment"`
-	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-}
-
 type Order struct {
 	ID             int32              `db:"id" json:"id"`
 	UserID         pgtype.UUID        `db:"user_id" json:"user_id"`
