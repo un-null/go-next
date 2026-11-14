@@ -40,24 +40,6 @@ func (h *UserHandler) GetUserById(c echo.Context) error {
 	return c.JSON(http.StatusOK, user.ToResponse())
 }
 
-func (h *UserHandler) RegisterRoutes(g *echo.Group) {
-	g.GET("/users/:id", h.GetUserById)
-	g.POST("/signup", h.SignUp)
-	g.POST("/login", h.Login)
-
-	// Profile management routes (require authentication)
-	protected := g.Group("")
-	// protected.Use(h.AuthMiddleware()) // Add your auth middleware here
-	protected.PATCH("/users/:id/name", h.UpdateUserName)
-	protected.PATCH("/users/:id/email", h.UpdateUserEmail)
-	protected.PATCH("/users/:id/password", h.ChangePassword)
-	protected.PATCH("/users/:id/coins", h.UpdateUserCoins)
-	protected.DELETE("/users/:id", h.DeleteUser)
-
-	// Utility routes
-	g.POST("/check-email", h.CheckEmailExists)
-}
-
 type signupRequest struct {
 	Name     string `json:"name" validate:"required,min=1,max=100"`
 	Email    string `json:"email" validate:"required,email,max=255"`
