@@ -49,7 +49,7 @@ func main() {
 	// Middleware
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:5173"},
-		AllowMethods:     []string{echo.GET, echo.POST, echo.DELETE},
+		AllowMethods:     []string{echo.GET, echo.POST, echo.PATCH, echo.DELETE},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 		AllowCredentials: true,
 	}))
@@ -104,13 +104,12 @@ func main() {
 	protected.PATCH("/users/:id/name", userHandler.UpdateUserName)
 	protected.PATCH("/users/:id/email", userHandler.UpdateUserEmail)
 	protected.PATCH("/users/:id/password", userHandler.ChangePassword)
-	protected.PATCH("/users/:id/coins", userHandler.UpdateUserCoins)
 	protected.DELETE("/users/:id", userHandler.DeleteUser)
 
 	protected.POST("/coins/charge", coinTransactionHandler.ChargeUserCoins)
 	protected.POST("/coins/spend", coinTransactionHandler.SpendUserCoins)
 	protected.GET("/coins/transactions", coinTransactionHandler.GetUserTransactions)
-	protected.GET("/coins//transactions/:id", coinTransactionHandler.GetTransactionByID)
+	protected.GET("/coins/transactions/:id", coinTransactionHandler.GetTransactionByID)
 
 	cartHandler.RegisterRoutes(protected)
 	orderHandler.RegisterRoutes(protected)

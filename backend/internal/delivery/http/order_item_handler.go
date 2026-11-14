@@ -21,7 +21,7 @@ func NewOrderItemHandler(uc usecase.OrderItemUsecase) *OrderItemHandler {
 }
 
 func (h *OrderItemHandler) RegisterRoutes(g *echo.Group) {
-	g.POST("/order-items", h.CreateOrderItem)
+	// Order items are written only by checkout; keep the read endpoints.
 	g.GET("/order-items/:id", h.GetOrderItemByID)
 	g.GET("/orders/:orderID/items", h.GetOrderItemsByOrderID)
 }

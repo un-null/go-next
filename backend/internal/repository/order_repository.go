@@ -4,7 +4,6 @@ import (
 	"backend/internal/database"
 	"backend/internal/entity"
 	"context"
-	"database/sql"
 	"errors"
 
 	"github.com/google/uuid"
@@ -43,8 +42,8 @@ func NewOrderRepository(queries OrderQuerier, db *pgxpool.Pool) OrderRepository 
 func (r *orderRepository) GetOrderById(ctx context.Context, id int) (*entity.Order, error) {
 	dbOrder, err := r.queries.GetOrderByID(ctx, int32(id))
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("order not found")
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, entity.ErrOrderNotFound
 		}
 		return nil, err
 	}
