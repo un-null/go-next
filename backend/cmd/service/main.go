@@ -77,7 +77,7 @@ func main() {
 	orderItemHandler := http.NewOrderItemHandler(orderItemUC)
 
 	orderRepo := repository.NewOrderRepository(queries, db)
-	orderUC := usecase.NewOrderUsecase(orderRepo, orderItemRepo, cartRepo, productRepo, db)
+	orderUC := usecase.NewOrderUsecase(orderRepo, orderItemRepo, cartRepo, productRepo, userRepo, coinTransactionRepo, db)
 	orderHandler := http.NewOrderHandler(orderUC)
 
 	userHandler := http.NewUserHandler(userUC, jwtSecret)
