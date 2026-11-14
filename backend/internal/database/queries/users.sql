@@ -10,6 +10,12 @@ SELECT id, name, email, password_hash, coins, created_at, updated_at
 FROM users
 WHERE id = $1;
 
+-- name: GetUserByIDForUpdate :one
+SELECT id, name, email, password_hash, coins, created_at, updated_at
+FROM users
+WHERE id = $1
+FOR UPDATE;
+
 -- name: GetUserByEmail :one
 SELECT id, name, email, password_hash, coins, created_at, updated_at
 FROM users

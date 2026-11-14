@@ -14,7 +14,7 @@ import (
 func TestOrderUsecase_GetOrderById_Success(t *testing.T) {
 	orderRepo := new(mocks.MockOrderRepository)
 
-	uc := NewOrderUsecase(orderRepo, nil, nil, nil, nil)
+	uc := NewOrderUsecase(orderRepo, nil, nil, nil, nil, nil, nil)
 
 	ctx := context.Background()
 	expected := &entity.Order{ID: 1, OrderNumber: "ORD-1"}
@@ -29,7 +29,7 @@ func TestOrderUsecase_GetOrderById_Success(t *testing.T) {
 
 func TestOrderUsecase_GetOrderById_Error(t *testing.T) {
 	orderRepo := new(mocks.MockOrderRepository)
-	uc := NewOrderUsecase(orderRepo, nil, nil, nil, nil)
+	uc := NewOrderUsecase(orderRepo, nil, nil, nil, nil, nil, nil)
 
 	ctx := context.Background()
 	expectedErr := errors.New("not found")
@@ -45,7 +45,7 @@ func TestOrderUsecase_GetOrderById_Error(t *testing.T) {
 
 func TestOrderUsecase_GetOrdersByUserID_Success(t *testing.T) {
 	orderRepo := new(mocks.MockOrderRepository)
-	uc := NewOrderUsecase(orderRepo, nil, nil, nil, nil)
+	uc := NewOrderUsecase(orderRepo, nil, nil, nil, nil, nil, nil)
 
 	ctx := context.Background()
 	userID := uuid.New()
@@ -61,7 +61,7 @@ func TestOrderUsecase_GetOrdersByUserID_Success(t *testing.T) {
 
 func TestOrderUsecase_GetOrdersByUserID_Error(t *testing.T) {
 	orderRepo := new(mocks.MockOrderRepository)
-	uc := NewOrderUsecase(orderRepo, nil, nil, nil, nil)
+	uc := NewOrderUsecase(orderRepo, nil, nil, nil, nil, nil, nil)
 
 	ctx := context.Background()
 	userID := uuid.New()

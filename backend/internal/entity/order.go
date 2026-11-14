@@ -42,13 +42,19 @@ type OrderListResponse struct {
 	Limit  int     `json:"limit"`
 }
 
+// CreateOrderRequest is what the client may send. The server decides the
+// user, order number, amount, coins and status.
 type CreateOrderRequest struct {
-	UserID         uuid.UUID                `json:"user_id" validate:"required"`
-	OrderNumber    string                   `json:"order_number" validate:"required"`
-	TotalAmount    float64                  `json:"total_amount" validate:"required"`
-	TotalCoinsUsed int                      `json:"total_coins_used,omitempty"`
-	Status         OrderStatus              `json:"status"`
-	Items          []CreateOrderItemRequest `json:"items" validate:"required,min=1"`
+	Items []CreateOrderItemRequest `json:"items" validate:"required,min=1,dive"`
+}
+
+// CreateOrderParams is built by the server and persisted as an order.
+type CreateOrderParams struct {
+	UserID         uuid.UUID
+	OrderNumber    string
+	TotalAmount    float64
+	TotalCoinsUsed int
+	Status         OrderStatus
 }
 
 type CreateOrderItemRequest struct {

@@ -281,6 +281,15 @@ func (h *UserHandler) parseUserID(c echo.Context) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID format")
 	}
+
+	currentUserID, err := getUserIDFromContext(c)
+	if err != nil {
+		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized")
+	}
+	if currentUserID != userID {
+		return uuid.Nil, echo.NewHTTPError(http.StatusForbidden, "You can only access your own account")
+	}
+
 	return userID, nil
 }
 

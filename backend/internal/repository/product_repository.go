@@ -2,10 +2,13 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"backend/internal/database"
 	"backend/internal/entity"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type ProductRepository interface {
@@ -19,7 +22,7 @@ type productRepository struct {
 	queries *database.Queries
 }
 
-func NewProductRepository(queries *database.Queries) ProductRepository {
+func NewProductRepository(queries *database.Queries) *productRepository {
 	return &productRepository{
 		queries: queries,
 	}
@@ -83,6 +86,32 @@ func (r *productRepository) UpdateStock(ctx context.Context, productID, newStock
 	}
 
 	return nil
+}
+
+func (r *productRepository) ReserveStockWithTx(ctx context.Context, tx pgx.Tx, productID, quantity int) (entity.Product, error) {
+	txQueries := r.queries.WithTx(tx)
+
+	dbProduct, err := txQueries.GetProductByIDForUpdate(ctx, int32(productID))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return entity.Product{}, entity.ErrProductNotFound
+		}
+		return entity.Product{}, fmt.Errorf("failed to lock product: %w", err)
+	}
+
+	if int(dbProduct.StockQuantity) < quantity {
+		return entity.Product{}, fmt.Errorf("%w: product %d has %d left", entity.ErrInsufficientStock, productID, dbProduct.StockQuantity)
+	}
+
+	dbProduct, err = txQueries.UpdateProductStock(ctx, database.UpdateProductStockParams{
+		ID:            dbProduct.ID,
+		StockQuantity: dbProduct.StockQuantity - int32(quantity),
+	})
+	if err != nil {
+		return entity.Product{}, fmt.Errorf("failed to reserve stock: %w", err)
+	}
+
+	return *dbProductToEntity(dbProduct), nil
 }
 
 func dbProductToEntity(dbProduct database.Product) *entity.Product {

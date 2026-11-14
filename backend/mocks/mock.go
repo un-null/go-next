@@ -176,6 +176,9 @@ func (m *MockCoinTransactionQueries) CreateCoinTransaction(ctx context.Context, 
 
 func (m *MockCoinTransactionQueries) GetCoinTransactionsByUserID(ctx context.Context, arg database.GetCoinTransactionsByUserIDParams) ([]database.CoinTransaction, error) {
 	args := m.Called(ctx, arg)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).([]database.CoinTransaction), args.Error(1)
 }
 
@@ -284,16 +287,16 @@ func (m *MockOrderRepository) GetOrdersByUserID(ctx context.Context, userID uuid
 	return args.Get(0).([]entity.Order), args.Error(1)
 }
 
-func (m *MockOrderRepository) CreateOrder(ctx context.Context, req entity.CreateOrderRequest) (*entity.Order, error) {
-	args := m.Called(ctx, req)
+func (m *MockOrderRepository) CreateOrder(ctx context.Context, params entity.CreateOrderParams) (*entity.Order, error) {
+	args := m.Called(ctx, params)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*entity.Order), args.Error(1)
 }
 
-func (m *MockOrderRepository) CreateOrderWithTx(ctx context.Context, tx pgx.Tx, req entity.CreateOrderRequest) (*entity.Order, error) {
-	args := m.Called(ctx, tx, req)
+func (m *MockOrderRepository) CreateOrderWithTx(ctx context.Context, tx pgx.Tx, params entity.CreateOrderParams) (*entity.Order, error) {
+	args := m.Called(ctx, tx, params)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -463,6 +466,14 @@ func (m *MockCartQuerier) GetOrdersByUserID(ctx context.Context, userID pgtype.U
 }
 func (m *MockCartQuerier) GetProductByID(ctx context.Context, id int32) (database.Product, error) {
 	return database.Product{}, nil
+}
+
+func (m *MockCartQuerier) GetProductByIDForUpdate(ctx context.Context, id int32) (database.Product, error) {
+	return database.Product{}, nil
+}
+
+func (m *MockCartQuerier) GetUserByIDForUpdate(ctx context.Context, id pgtype.UUID) (database.User, error) {
+	return database.User{}, nil
 }
 func (m *MockCartQuerier) GetUserByEmail(ctx context.Context, email string) (database.User, error) {
 	return database.User{}, nil

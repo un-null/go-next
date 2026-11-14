@@ -147,7 +147,7 @@ func TestCreateCoinTransaction_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, transaction)
-	assert.Equal(t, 1, transaction.ID)
+	assert.Equal(t, int32(1), transaction.ID)
 	assert.Equal(t, userID, transaction.UserID)
 	assert.Equal(t, "charge", transaction.TransactionType)
 	assert.Equal(t, 100, transaction.Amount)
@@ -291,7 +291,7 @@ func TestGetTransactionByID_Found(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, transaction)
-	assert.Equal(t, 1, transaction.ID)
+	assert.Equal(t, int32(1), transaction.ID)
 	assert.Equal(t, userID, transaction.UserID)
 	assert.Equal(t, "charge", transaction.TransactionType)
 
@@ -349,7 +349,7 @@ func TestDbTransactionToEntity(t *testing.T) {
 
 	entity := dbTransactionToEntity(dbTx)
 
-	assert.Equal(t, 1, entity.ID)
+	assert.Equal(t, int32(1), entity.ID)
 	assert.Equal(t, userID, entity.UserID)
 	assert.Equal(t, "charge", entity.TransactionType)
 	assert.Equal(t, 100, entity.Amount)
@@ -377,7 +377,7 @@ func TestDbTransactionToEntity_NoOrderID(t *testing.T) {
 
 	entity := dbTransactionToEntity(dbTx)
 
-	assert.Equal(t, 2, entity.ID)
+	assert.Equal(t, int32(2), entity.ID)
 	assert.Equal(t, userID, entity.UserID)
 	assert.Equal(t, "purchase", entity.TransactionType)
 	assert.Equal(t, -50, entity.Amount)

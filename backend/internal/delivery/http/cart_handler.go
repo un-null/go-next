@@ -165,7 +165,7 @@ func (h *CartHandler) ClearCart(c echo.Context) error {
 }
 
 func getUserIDFromContext(c echo.Context) (uuid.UUID, error) {
-	userIDInterface := c.Get("userID")
+	userIDInterface := c.Get("user_id")
 	if userIDInterface == nil {
 		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "User ID not found")
 	}
