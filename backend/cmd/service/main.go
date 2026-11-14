@@ -7,6 +7,7 @@ import (
 	"backend/internal/usecase"
 	"context"
 	"log"
+	nethttp "net/http"
 	"os"
 
 	"github.com/go-playground/validator/v10"
@@ -53,6 +54,11 @@ func main() {
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 		AllowCredentials: true,
 	}))
+
+	// Health check for the platform. It must not touch the database.
+	e.GET("/healthz", func(c echo.Context) error {
+		return c.JSON(nethttp.StatusOK, map[string]string{"status": "ok"})
+	})
 
 	// DI
 	authMiddleware := http.NewAuthMiddleware(jwtSecret)
@@ -112,8 +118,13 @@ func main() {
 	cartHandler.RegisterRoutes(protected)
 	orderHandler.RegisterRoutes(protected)
 
-	log.Println("Server running on :8080")
-	if err := e.Start(":8080"); err != nil {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Server running on :%s", port)
+	if err := e.Start(":" + port); err != nil {
 		log.Fatal(err)
 	}
 }
