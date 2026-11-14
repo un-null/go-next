@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -33,7 +34,7 @@ type coinTransactionRepository struct {
 	db      *pgxpool.Pool
 }
 
-func NewCoinTransactionRepository(queries *database.Queries, db *pgxpool.Pool) CoinTransactionRepository {
+func NewCoinTransactionRepository(queries *database.Queries, db *pgxpool.Pool) *coinTransactionRepository {
 	return &coinTransactionRepository{
 		queries: queries,
 		db:      db,
@@ -41,12 +42,20 @@ func NewCoinTransactionRepository(queries *database.Queries, db *pgxpool.Pool) C
 }
 
 func (r *coinTransactionRepository) CreateCoinTransaction(ctx context.Context, params CreateCoinTransactionParams) (*entity.CoinTransaction, error) {
+	return createCoinTransaction(ctx, r.queries, params)
+}
+
+func (r *coinTransactionRepository) CreateCoinTransactionWithTx(ctx context.Context, tx pgx.Tx, params CreateCoinTransactionParams) (*entity.CoinTransaction, error) {
+	return createCoinTransaction(ctx, r.queries.WithTx(tx), params)
+}
+
+func createCoinTransaction(ctx context.Context, q *database.Queries, params CreateCoinTransactionParams) (*entity.CoinTransaction, error) {
 	var orderID pgtype.Int4
 	if params.OrderID != nil {
 		orderID = database.Int32ToPgtype(*params.OrderID)
 	}
 
-	dbTransaction, err := r.queries.CreateCoinTransaction(ctx, database.CreateCoinTransactionParams{
+	dbTransaction, err := q.CreateCoinTransaction(ctx, database.CreateCoinTransactionParams{
 		UserID:          database.UUIDToPgtype(params.UserID),
 		TransactionType: database.TransactionType(params.TransactionType),
 		Amount:          int32(params.Amount),
@@ -97,7 +106,7 @@ func (r *coinTransactionRepository) ChargeUserCoins(ctx context.Context, userID 
 
 	txQueries := r.queries.WithTx(tx)
 
-	user, err := txQueries.GetUserByID(ctx, database.UUIDToPgtype(userID))
+	user, err := txQueries.GetUserByIDForUpdate(ctx, database.UUIDToPgtype(userID))
 	if err != nil {
 		return nil, nil, fmt.Errorf("user not found: %w", err)
 	}
@@ -170,7 +179,7 @@ func (r *coinTransactionRepository) SpendUserCoins(ctx context.Context, userID u
 
 	txQueries := r.queries.WithTx(tx)
 
-	user, err := txQueries.GetUserByID(ctx, database.UUIDToPgtype(userID))
+	user, err := txQueries.GetUserByIDForUpdate(ctx, database.UUIDToPgtype(userID))
 	if err != nil {
 		return nil, nil, fmt.Errorf("user not found: %w", err)
 	}

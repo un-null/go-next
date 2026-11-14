@@ -6,8 +6,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -29,7 +31,7 @@ type userRepository struct {
 	db      *pgxpool.Pool
 }
 
-func NewUserRepository(queries *database.Queries, db *pgxpool.Pool) UserRepository {
+func NewUserRepository(queries *database.Queries, db *pgxpool.Pool) *userRepository {
 	return &userRepository{
 		queries: queries,
 		db:      db,
@@ -189,6 +191,56 @@ func (r *userRepository) UpdateUserCoins(ctx context.Context, id uuid.UUID, coin
 			return nil, errors.New("user not found")
 		}
 		return nil, err
+	}
+
+	user := &entity.User{
+		ID:        database.PgtypeToUUID(dbUser.ID),
+		Name:      dbUser.Name,
+		Email:     dbUser.Email,
+		Coins:     int(database.PgtypeToInt32(dbUser.Coins)),
+		CreatedAt: dbUser.CreatedAt.Time,
+		UpdatedAt: dbUser.UpdatedAt.Time,
+	}
+
+	return user, nil
+}
+
+func (r *userRepository) GetUserByIDForUpdateWithTx(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*entity.User, error) {
+	txQueries := r.queries.WithTx(tx)
+
+	dbUser, err := txQueries.GetUserByIDForUpdate(ctx, database.UUIDToPgtype(id))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, entity.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to lock user: %w", err)
+	}
+
+	user := &entity.User{
+		ID:           database.PgtypeToUUID(dbUser.ID),
+		Name:         dbUser.Name,
+		Email:        dbUser.Email,
+		PasswordHash: dbUser.PasswordHash,
+		Coins:        int(database.PgtypeToInt32(dbUser.Coins)),
+		CreatedAt:    dbUser.CreatedAt.Time,
+		UpdatedAt:    dbUser.UpdatedAt.Time,
+	}
+
+	return user, nil
+}
+
+func (r *userRepository) UpdateUserCoinsWithTx(ctx context.Context, tx pgx.Tx, id uuid.UUID, coinsDelta int) (*entity.User, error) {
+	txQueries := r.queries.WithTx(tx)
+
+	dbUser, err := txQueries.UpdateUserCoins(ctx, database.UpdateUserCoinsParams{
+		ID:    database.UUIDToPgtype(id),
+		Coins: database.Int32ToPgtype(int32(coinsDelta)),
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, entity.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to update user coins: %w", err)
 	}
 
 	user := &entity.User{
