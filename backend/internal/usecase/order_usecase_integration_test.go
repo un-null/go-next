@@ -168,6 +168,11 @@ func TestCheckout_Success(t *testing.T) {
 	assert.Equal(t, 3, order.Items[0].Quantity)
 	assert.InDelta(t, 59.97, order.Items[0].Subtotal, 0.001)
 
+	fetched, err := uc.GetOrderById(ctx, order.ID)
+	require.NoError(t, err)
+	require.Len(t, fetched.Items, 1)
+	assert.Equal(t, 3, fetched.Items[0].Quantity)
+
 	assert.Equal(t, 7, scalarInt(t, pool, `SELECT stock_quantity FROM products WHERE id = $1`, f.productID))
 	assert.Equal(t, 4940, scalarInt(t, pool, `SELECT coins FROM users WHERE id = $1`, f.userID))
 

@@ -13,18 +13,23 @@ import (
 
 func TestOrderUsecase_GetOrderById_Success(t *testing.T) {
 	orderRepo := new(mocks.MockOrderRepository)
+	orderItemRepo := new(mocks.MockOrderItemRepository)
 
-	uc := NewOrderUsecase(orderRepo, nil, nil, nil, nil, nil, nil)
+	uc := NewOrderUsecase(orderRepo, orderItemRepo, nil, nil, nil, nil, nil)
 
 	ctx := context.Background()
 	expected := &entity.Order{ID: 1, OrderNumber: "ORD-1"}
+	items := []entity.OrderItem{{ID: 10, OrderID: 1, ProductID: 100, Quantity: 2}}
 	orderRepo.On("GetOrderById", ctx, 1).Return(expected, nil)
+	orderItemRepo.On("GetOrderItemsByOrderID", ctx, 1).Return(items, nil)
 
 	order, err := uc.GetOrderById(ctx, 1)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected, order)
+	assert.Equal(t, items, order.Items)
 	orderRepo.AssertExpectations(t)
+	orderItemRepo.AssertExpectations(t)
 }
 
 func TestOrderUsecase_GetOrderById_Error(t *testing.T) {

@@ -73,8 +73,6 @@ func main() {
 	coinTransactionUC := usecase.NewCoinTransactionUseCase(coinTransactionRepo)
 
 	orderItemRepo := repository.NewOrderItemRepository(queries, db)
-	orderItemUC := usecase.NewOrderItemUsecase(orderItemRepo)
-	orderItemHandler := http.NewOrderItemHandler(orderItemUC)
 
 	orderRepo := repository.NewOrderRepository(queries, db)
 	orderUC := usecase.NewOrderUsecase(orderRepo, orderItemRepo, cartRepo, productRepo, userRepo, coinTransactionRepo, db)
@@ -113,7 +111,6 @@ func main() {
 
 	cartHandler.RegisterRoutes(protected)
 	orderHandler.RegisterRoutes(protected)
-	orderItemHandler.RegisterRoutes(protected)
 
 	log.Println("Server running on :8080")
 	if err := e.Start(":8080"); err != nil {

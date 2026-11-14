@@ -64,7 +64,18 @@ func NewOrderUsecase(
 }
 
 func (uc *orderUsecase) GetOrderById(ctx context.Context, id int) (*entity.Order, error) {
-	return uc.orderRepo.GetOrderById(ctx, id)
+	order, err := uc.orderRepo.GetOrderById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	items, err := uc.orderItemRepo.GetOrderItemsByOrderID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	order.Items = items
+
+	return order, nil
 }
 
 func (uc *orderUsecase) GetOrdersByUserID(ctx context.Context, userID uuid.UUID) ([]entity.Order, error) {
