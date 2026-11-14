@@ -142,7 +142,8 @@ func (uc *orderUsecase) CreateOrder(ctx context.Context, userID uuid.UUID, req e
 		orderItems[i].OrderID = order.ID
 	}
 
-	if _, err := uc.orderItemRepo.CreateOrderItemsWithTx(ctx, tx, orderItems); err != nil {
+	createdItems, err := uc.orderItemRepo.CreateOrderItemsWithTx(ctx, tx, orderItems)
+	if err != nil {
 		return nil, fmt.Errorf("failed to create order items: %w", err)
 	}
 
@@ -171,6 +172,6 @@ func (uc *orderUsecase) CreateOrder(ctx context.Context, userID uuid.UUID, req e
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	order.Items = orderItems
+	order.Items = createdItems
 	return order, nil
 }
