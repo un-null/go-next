@@ -78,13 +78,7 @@ func applyMigrations(t *testing.T, ctx context.Context, dsn string) {
 		migration, err := os.ReadFile(file)
 		require.NoError(t, err)
 
-		// Some files carry a goosedown section in the same file; never run it.
-		sql := string(migration)
-		if i := strings.Index(sql, "-- +goose Down"); i >= 0 {
-			sql = sql[:i]
-		}
-
-		_, err = conn.Exec(ctx, sql)
+		_, err = conn.Exec(ctx, string(migration))
 		require.NoError(t, err, "migration %s", filepath.Base(file))
 	}
 }
