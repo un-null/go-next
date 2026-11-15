@@ -8,6 +8,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 
 import App from "./App";
+import { theme } from "./theme";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,7 +26,7 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <MantineProvider defaultColorScheme="light">
+    <MantineProvider theme={theme} defaultColorScheme="light">
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <App />
