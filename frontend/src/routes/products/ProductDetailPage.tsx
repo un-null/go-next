@@ -1,8 +1,8 @@
 import {
   Alert,
   Anchor,
+  AspectRatio,
   Badge,
-  Box,
   Button,
   Divider,
   Group,
@@ -89,15 +89,16 @@ function ProductDetail({ productId }: { productId: number }) {
           spacing="xl"
           className={classes.layout}
         >
-          <Box h={360} bg="gray.1" className={classes.media}>
+          <AspectRatio ratio={3 / 2} bg="gray.1" className={classes.media}>
             <Image
               src={thumbnailUrl(data.image_url, 900)}
               fallbackSrc={PLACEHOLDER}
               alt=""
+              w="100%"
               h="100%"
               fit="cover"
             />
-          </Box>
+          </AspectRatio>
 
           <Stack gap="md">
             <div>
@@ -110,7 +111,7 @@ function ProductDetail({ productId }: { productId: number }) {
             </div>
 
             <Group gap="xs">
-              <Text fw={700} fz="h3" c="teal.8">
+              <Text fw={700} fz="h3" ff="monospace">
                 {formatPrice(data.price)}
               </Text>
               <Text size="sm" c="dimmed">
@@ -153,7 +154,7 @@ function NotFound() {
       </Title>
       <Text c="dimmed">This item does not exist, or it was removed.</Text>
       <Group>
-        <Button component={Link} to="/products" variant="light" color="teal">
+        <Button component={Link} to="/products" variant="light">
           Back to the catalogue
         </Button>
       </Group>

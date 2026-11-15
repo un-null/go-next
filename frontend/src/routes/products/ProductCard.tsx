@@ -1,4 +1,4 @@
-import { Badge, Box, Card, Group, Image, Text } from "@mantine/core";
+import { AspectRatio, Badge, Card, Group, Image, Text } from "@mantine/core";
 import { Link } from "react-router";
 
 import type { Product } from "../../api/types";
@@ -22,20 +22,20 @@ export function ProductCard({ product }: ProductCardProps) {
       component={Link}
       to={`/products/${product.id}`}
       padding="md"
-      radius="md"
       withBorder
     >
       <Card.Section>
-        <Box h={180} bg="gray.1">
+        <AspectRatio ratio={3 / 2} bg="gray.1">
           <Image
             src={thumbnailUrl(product.image_url)}
             fallbackSrc={PLACEHOLDER}
             alt=""
+            w="100%"
             h="100%"
             fit="cover"
             loading="lazy"
           />
-        </Box>
+        </AspectRatio>
       </Card.Section>
 
       <Group
@@ -48,7 +48,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <Text fw={600} lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
           {product.name}
         </Text>
-        <Text fw={700} c="teal.8" style={{ flexShrink: 0 }}>
+        <Text fw={700} ff="monospace" style={{ flexShrink: 0 }}>
           {formatPrice(product.price)}
         </Text>
       </Group>

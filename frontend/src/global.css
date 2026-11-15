@@ -1,4 +1,13 @@
 body {
   margin: 0;
-  background-color: #faf9f6;
+  background-color: #ffffff;
+}
+
+/* Mantine writes the anchor colour inline (the `c` prop), so the hover colour needs !important. */
+a.mantine-Anchor-root {
+  transition: color 120ms ease;
+}
+
+a.mantine-Anchor-root:hover {
+  color: var(--mantine-color-blue-6) !important;
 }
