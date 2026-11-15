@@ -1,34 +1,15 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
   "files": {
-    "includes": [
-      "app/**/*.js",
-      "app/**/*.ts",
-      "app/**/*.tsx",
-      "app/**/*.js",
-      "app/**/*.jsx"
-    ]
+    "includes": ["src/**/*.ts", "src/**/*.tsx"]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space"
   },
-  "javascript": {
-    "globals": ["React"]
-  },
   "linter": {
     "enabled": true,
-    "rules": {
-      "nursery": {
-        "useSortedClasses": "warn"
-      },
-      "suspicious": {
-        "noReactSpecificProps": "off"
-      },
-      "correctness": {
-        "noEmptyPattern": "off"
-      }
-    }
+    "rules": {}
   },
   "assist": {
     "actions": {
@@ -36,25 +17,5 @@
         "organizeImports": "on"
       }
     }
-  },
-  "overrides": [
-    {
-      "includes": [
-        "error.tsx",
-        "layout.tsx",
-        "loading.tsx",
-        "not-found.tsx",
-        "page.tsx",
-        "template.tsx",
-        "next.config.ts"
-      ],
-      "linter": {
-        "rules": {
-          "style": {
-            "noDefaultExport": "off"
-          }
-        }
-      }
-    }
-  ]
+  }
 }
