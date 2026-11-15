@@ -28,14 +28,12 @@ export function ProductsPage() {
         <Title order={1} size="h2">
           Products
         </Title>
-        <Text c="dimmed" mt={4}>
-          Twenty items, priced in dollars and paid in coins.
-        </Text>
       </div>
 
       {isSlow && (
         <Alert color="yellow" variant="light" title="Waking the API up">
-          The free instance (Render) sleeps after fifteen minutes. The first request can take about 20 sec. It is working, not broken.
+          The free instance (Render) sleeps after fifteen minutes. The first
+          request can take about 20 sec. It is working, not broken.
         </Alert>
       )}
 

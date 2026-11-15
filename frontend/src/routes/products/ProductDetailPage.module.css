@@ -1,0 +1,10 @@
+.media {
+  overflow: hidden;
+  border-radius: var(--mantine-radius-md);
+}
+
+@media (min-width: 62em) {
+  .layout {
+    align-items: start;
+  }
+}
