@@ -1,50 +1,16 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { addToCart, clearCart, getCart, removeFromCart } from "./cart";
-import { ApiError } from "./client";
 import { createOrder, getOrder, listOrders } from "./orders";
+import {
+  captureError,
+  fetchMock,
+  jsonResponse,
+  lastCall,
+  mockApi,
+} from "./testing";
 
-const fetchMock = vi.fn<typeof fetch>();
-
-beforeEach(() => {
-  vi.stubEnv("VITE_API_URL", "https://api.test");
-  fetchMock.mockReset();
-  vi.stubGlobal("fetch", fetchMock);
-});
-
-afterEach(() => {
-  vi.unstubAllEnvs();
-  vi.unstubAllGlobals();
-});
-
-function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-function lastCall() {
-  const [url, init] = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
-  return {
-    url,
-    init,
-    body: init?.body ? JSON.parse(String(init.body)) : undefined,
-    headers: init?.headers as Record<string, string>,
-  };
-}
-
-async function captureError(promise: Promise<unknown>): Promise<ApiError> {
-  try {
-    await promise;
-  } catch (error) {
-    if (error instanceof ApiError) {
-      return error;
-    }
-    throw error;
-  }
-  throw new Error("expected the request to fail");
-}
+mockApi();
 
 describe("cart", () => {
   it("reads the cart with the bearer token", async () => {

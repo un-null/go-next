@@ -8,12 +8,13 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 
 import App from "./App";
+import { retryUnlessClientError } from "./api/retry";
 import { theme } from "./theme";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: retryUnlessClientError,
       refetchOnWindowFocus: false,
     },
   },
