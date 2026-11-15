@@ -7,7 +7,9 @@ import (
 	"backend/internal/usecase"
 	"context"
 	"log"
+	nethttp "net/http"
 	"os"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -42,17 +44,32 @@ func main() {
 	queries := dbService.Queries()
 	db := dbService.DB()
 
+	allowedOrigins := []string{"http://localhost:5173"}
+	if raw := os.Getenv("ALLOWED_ORIGINS"); raw != "" {
+		allowedOrigins = nil
+		for _, origin := range strings.Split(raw, ",") {
+			if origin = strings.TrimSpace(origin); origin != "" {
+				allowedOrigins = append(allowedOrigins, origin)
+			}
+		}
+	}
+
 	e := echo.New()
 
 	e.Validator = &CustomValidator{validator: validator.New()}
 
 	// Middleware
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     allowedOrigins,
 		AllowMethods:     []string{echo.GET, echo.POST, echo.PATCH, echo.DELETE},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 		AllowCredentials: true,
 	}))
+
+	// Health check for the platform. It must not touch the database.
+	e.GET("/healthz", func(c echo.Context) error {
+		return c.JSON(nethttp.StatusOK, map[string]string{"status": "ok"})
+	})
 
 	// DI
 	authMiddleware := http.NewAuthMiddleware(jwtSecret)
@@ -104,6 +121,9 @@ func main() {
 	protected.PATCH("/users/:id/password", userHandler.ChangePassword)
 	protected.DELETE("/users/:id", userHandler.DeleteUser)
 
+	// Coin charging is a mock payment. It credits the caller's own balance with
+	// no payment behind it: the coins are demo currency with no monetary value.
+	// The amount is capped in the handler so the demo cannot mint without bound.
 	protected.POST("/coins/charge", coinTransactionHandler.ChargeUserCoins)
 	protected.POST("/coins/spend", coinTransactionHandler.SpendUserCoins)
 	protected.GET("/coins/transactions", coinTransactionHandler.GetUserTransactions)
@@ -112,8 +132,13 @@ func main() {
 	cartHandler.RegisterRoutes(protected)
 	orderHandler.RegisterRoutes(protected)
 
-	log.Println("Server running on :8080")
-	if err := e.Start(":8080"); err != nil {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Server running on :%s", port)
+	if err := e.Start(":" + port); err != nil {
 		log.Fatal(err)
 	}
 }

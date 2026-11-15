@@ -1,4 +1,3 @@
--- +goose Up
 -- Insert categories
 INSERT INTO categories (id, name) VALUES
 (1, 'Electronics'),
@@ -32,7 +31,3 @@ INSERT INTO products (category_id, name, description, price, stock_quantity, ima
 (3, 'Summer Dress Floral', 'Light summer dress with floral patterns', 34.99, 180, 'https://images.unsplash.com/photo-1520975918313-60fdbd8d9b8c', 4.4, 60, NOW(), NOW()),
 (3, 'Winter Jacket HeavyDuty', 'Insulated winter jacket for cold weather', 129.99, 80, 'https://images.unsplash.com/photo-1520975918313-60fdbd8d9b8c', 4.8, 75, NOW(), NOW()),
 (3, 'Baseball Cap Classic', 'Adjustable unisex baseball cap', 12.99, 300, 'https://images.unsplash.com/photo-1520975918313-60fdbd8d9b8c', 4.1, 25, NOW(), NOW());
-
--- +goose Down
-DELETE FROM products;
-DELETE FROM categories;
