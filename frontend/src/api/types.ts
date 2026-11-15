@@ -31,6 +31,11 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface SignupResponse {
+  message: string;
+  user: User;
+}
+
 export interface CartItem {
   id: number;
   user_id: string;
