@@ -20,7 +20,7 @@ func NewCoinTransactionHandler(coinTransactionUC usecase.CoinTransactionUseCase)
 }
 
 type chargeCoinsRequest struct {
-	Amount      int    `json:"amount" validate:"required,gt=0"`
+	Amount      int    `json:"amount" validate:"required,gt=0,lte=10000"`
 	Description string `json:"description" validate:"required"`
 	OrderID     *int32 `json:"order_id,omitempty"`
 }

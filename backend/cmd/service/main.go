@@ -9,6 +9,7 @@ import (
 	"log"
 	nethttp "net/http"
 	"os"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -43,13 +44,23 @@ func main() {
 	queries := dbService.Queries()
 	db := dbService.DB()
 
+	allowedOrigins := []string{"http://localhost:5173"}
+	if raw := os.Getenv("ALLOWED_ORIGINS"); raw != "" {
+		allowedOrigins = nil
+		for _, origin := range strings.Split(raw, ",") {
+			if origin = strings.TrimSpace(origin); origin != "" {
+				allowedOrigins = append(allowedOrigins, origin)
+			}
+		}
+	}
+
 	e := echo.New()
 
 	e.Validator = &CustomValidator{validator: validator.New()}
 
 	// Middleware
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     allowedOrigins,
 		AllowMethods:     []string{echo.GET, echo.POST, echo.PATCH, echo.DELETE},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 		AllowCredentials: true,
@@ -110,6 +121,9 @@ func main() {
 	protected.PATCH("/users/:id/password", userHandler.ChangePassword)
 	protected.DELETE("/users/:id", userHandler.DeleteUser)
 
+	// Coin charging is a mock payment. It credits the caller's own balance with
+	// no payment behind it: the coins are demo currency with no monetary value.
+	// The amount is capped in the handler so the demo cannot mint without bound.
 	protected.POST("/coins/charge", coinTransactionHandler.ChargeUserCoins)
 	protected.POST("/coins/spend", coinTransactionHandler.SpendUserCoins)
 	protected.GET("/coins/transactions", coinTransactionHandler.GetUserTransactions)
