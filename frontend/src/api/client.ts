@@ -6,7 +6,6 @@ export interface RequestOptions {
 }
 
 export class ApiError extends Error {
-  /** HTTP status, or 0 when the request never reached the server. */
   readonly status: number;
   readonly body: unknown;
 
@@ -32,9 +31,11 @@ export async function request<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
+  const url = `${baseUrl()}${path}`;
+
   let response: Response;
   try {
-    response = await fetch(`${baseUrl()}${path}`, {
+    response = await fetch(url, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -64,8 +65,6 @@ export async function request<T>(
   return payload as T;
 }
 
-// Read at call time rather than module load so a missing variable is reported
-// by the request that needs it, not by the import graph.
 function baseUrl(): string {
   const url = import.meta.env.VITE_API_URL;
   if (!url) {
@@ -85,8 +84,6 @@ function parseJson(text: string): unknown {
   }
 }
 
-// Handler errors use {"error": "..."}, Echo's built-in errors use
-// {"message": "..."}. Read both so a 401 and a 409 look the same to the UI.
 function errorMessage(payload: unknown, status: number): string {
   if (typeof payload === "object" && payload !== null) {
     const record = payload as Record<string, unknown>;

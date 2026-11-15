@@ -1,36 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { login, signup } from "./auth";
 import { getProduct, listCategories, listProducts } from "./catalog";
+import { fetchMock, jsonResponse, lastCall, mockApi } from "./testing";
 
-const fetchMock = vi.fn<typeof fetch>();
-
-beforeEach(() => {
-  vi.stubEnv("VITE_API_URL", "https://api.test");
-  fetchMock.mockReset();
-  vi.stubGlobal("fetch", fetchMock);
-});
-
-afterEach(() => {
-  vi.unstubAllEnvs();
-  vi.unstubAllGlobals();
-});
-
-function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-function lastCall() {
-  const [url, init] = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
-  return {
-    url,
-    init,
-    body: init?.body ? JSON.parse(String(init.body)) : undefined,
-  };
-}
+mockApi();
 
 describe("auth", () => {
   it("posts credentials and returns the token envelope", async () => {

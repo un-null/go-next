@@ -1,4 +1,4 @@
-import { AppShell, Container, Group, Text } from "@mantine/core";
+import { Anchor, AppShell, Container, Group, Text } from "@mantine/core";
 import { Link, Outlet } from "react-router";
 
 export function AppLayout() {
@@ -8,10 +8,20 @@ export function AppLayout() {
         <Container size="lg" h="100%">
           <Group h="100%" justify="space-between">
             <Link to="/" style={{ textDecoration: "none" }}>
-              <Text fw={700} c="teal.8">
+              <Text fw={700} c="dark.9">
                 go-next
               </Text>
             </Link>
+            <Anchor
+              component={Link}
+              to="/products"
+              size="xs"
+              tt="uppercase"
+              ff="monospace"
+              c="dimmed"
+            >
+              Products
+            </Anchor>
           </Group>
         </Container>
       </AppShell.Header>

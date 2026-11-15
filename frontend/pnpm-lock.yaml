@@ -17,6 +17,9 @@ importers:
       '@mantine/hooks':
         specifier: ^8.3.18
         version: 8.3.18(react@19.1.0)
+      '@tabler/icons-react':
+        specifier: ^3.52.0
+        version: 3.52.0(react@19.1.0)
       '@tanstack/react-query':
         specifier: ^5.107.1
         version: 5.107.1(@types/react@19.1.8)(react@19.1.0)
@@ -921,6 +924,14 @@ packages:
   '@speed-highlight/core@1.2.24':
     resolution: {integrity: sha512-qeW2e1l78afw8VhRPfPQ1Gjj+KU5XFQ/OFV5ti6eTa9bruO7mJyZtA4vw0ofqmA3tKCkROE9xLk3VZoeRc98nw==}
 
+  '@tabler/icons-react@3.52.0':
+    resolution: {integrity: sha512-tN22mz4KLVpR+psqu9bAsT4b1IdhKcPGA1fDhyQerIv+8azyowdWzf8e0hWxQSsIxDTfkipGfiL0/uHNmpbvgw==}
+    peerDependencies:
+      react: '>= 16'
+
+  '@tabler/icons@3.52.0':
+    resolution: {integrity: sha512-dldKlJNfO/gZnGLcIY0X2EFFKIMGwL/rEvTqglvBgAPFiwj9pZOCN5V3Sf0Gyjq6foX4VQmLdOmsS4w5FdWKAw==}
+
   '@tanstack/query-core@5.107.1':
     resolution: {integrity: sha512-PSyAik11oQBEVOiVy5hjZWHmoUqOXqK1WYy4v55mcxozEfKaQgpUMsgnXhWjuESzSht8JfzqMS1m6M/9CpNgvg==}
 
@@ -1062,10 +1073,6 @@ packages:
   deep-eql@5.0.2:
     resolution: {integrity: sha512-h5k/5U50IJJFpzfL6nO9jaaumfjO/f2NjK/oYB2Djzm4p9L+3T9qWpZqZ2hAbLPuuYq9wrU08WQyBTL5GbPk5Q==}
     engines: {node: '>=6'}
-
-  detect-libc@2.0.4:
-    resolution: {integrity: sha512-3UDv+G9CsCKO1WKMGw9fwq/SWJYbI0c5Y7LU1AXYoDdbhE2AHQ6N6Nb34sG8Fj7T5APy8qXDCKuuIHd1BR0tVA==}
-    engines: {node: '>=8'}
 
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
@@ -2260,6 +2267,13 @@ snapshots:
 
   '@speed-highlight/core@1.2.24': {}
 
+  '@tabler/icons-react@3.52.0(react@19.1.0)':
+    dependencies:
+      '@tabler/icons': 3.52.0
+      react: 19.1.0
+
+  '@tabler/icons@3.52.0': {}
+
   '@tanstack/query-core@5.107.1': {}
 
   '@tanstack/react-query@5.107.1(@types/react@19.1.8)(react@19.1.0)':
@@ -2408,9 +2422,6 @@ snapshots:
 
   deep-eql@5.0.2: {}
 
-  detect-libc@2.0.4:
-    optional: true
-
   detect-libc@2.1.2: {}
 
   detect-node-es@1.1.0: {}
@@ -2548,7 +2559,7 @@ snapshots:
 
   lightningcss@1.30.1:
     dependencies:
-      detect-libc: 2.0.4
+      detect-libc: 2.1.2
     optionalDependencies:
       lightningcss-darwin-arm64: 1.30.1
       lightningcss-darwin-x64: 1.30.1
