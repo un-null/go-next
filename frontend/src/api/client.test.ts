@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { request } from "./client";
+import { ApiError, request } from "./client";
 import { captureError, fetchMock, jsonResponse, mockApi } from "./testing";
 
 mockApi("https://api.test/");
@@ -20,6 +20,19 @@ describe("request", () => {
       Accept: "application/json",
       "Content-Type": "application/json",
     });
+  });
+
+  it("reports a missing base URL instead of a network failure", async () => {
+    vi.stubEnv("VITE_API_URL", "");
+
+    const error = await request("/api/products").catch(
+      (cause: unknown) => cause,
+    );
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error).not.toBeInstanceOf(ApiError);
+    expect((error as Error).message).toBe("VITE_API_URL is not set");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("only attaches the bearer token when one is given", async () => {
