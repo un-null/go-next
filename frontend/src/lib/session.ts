@@ -42,6 +42,7 @@ function commit(next: Session | null): void {
       storage()?.removeItem(KEY);
     }
   } catch {
+    // Storage is blocked. This tab keeps the session; a reload will not.
   }
 
   for (const listener of listeners) {
