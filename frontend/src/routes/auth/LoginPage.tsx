@@ -2,6 +2,7 @@ import {
   Alert,
   Anchor,
   Button,
+  PasswordInput,
   Stack,
   Text,
   TextInput,
@@ -68,9 +69,8 @@ export function LoginPage() {
             withAsterisk
             {...form.getInputProps("email")}
           />
-          <TextInput
+          <PasswordInput
             label="Password"
-            type="password"
             autoComplete="current-password"
             withAsterisk
             {...form.getInputProps("password")}

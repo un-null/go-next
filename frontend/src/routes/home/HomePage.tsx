@@ -21,6 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 import { productsQuery } from "../../api/queries";
+import { useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
 import { ProductCard } from "../products/ProductCard";
 
@@ -60,14 +61,30 @@ const STEPS: {
 ];
 
 export function HomePage() {
+  const session = useSession();
+
   return (
     <Stack gap={56} pb="xl">
       <HowItWorks />
       <Featured />
       <Stack gap="sm" align="center">
-        <Button component={Link} to="/products" size="md">
-          Start shopping
-        </Button>
+        {session ? (
+          <Button component={Link} to="/products" size="md">
+            Start shopping
+          </Button>
+        ) : (
+          <>
+            <Button component={Link} to="/signup" size="md">
+              Create an account
+            </Button>
+            <Text size="sm">
+              Already have an account?{" "}
+              <Anchor component={Link} to="/login">
+                Sign in
+              </Anchor>
+            </Text>
+          </>
+        )}
         <Text size="xs" c="dimmed">
           Coins are demo currency, with no monetary value.
         </Text>

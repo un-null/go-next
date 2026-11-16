@@ -2,6 +2,7 @@ import {
   Alert,
   Anchor,
   Button,
+  PasswordInput,
   Stack,
   Text,
   TextInput,
@@ -29,8 +30,6 @@ export function SignupPage() {
     },
   });
 
-  // Signup returns the user but no token, so the session starts with a login.
-  // One mutation keeps one loading state and one error path.
   const createAccount = useMutation({
     mutationFn: async (values: SignupInput) => {
       await signup(values);
@@ -80,9 +79,8 @@ export function SignupPage() {
             withAsterisk
             {...form.getInputProps("email")}
           />
-          <TextInput
+          <PasswordInput
             label="Password"
-            type="password"
             autoComplete="new-password"
             description="At least 8 characters."
             withAsterisk

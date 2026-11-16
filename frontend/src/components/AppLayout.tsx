@@ -58,14 +58,9 @@ export function AppLayout() {
                   </Menu.Dropdown>
                 </Menu>
               ) : (
-                <>
-                  <Anchor component={Link} to="/login" {...NAV}>
-                    Sign in
-                  </Anchor>
-                  <Anchor component={Link} to="/signup" {...NAV}>
-                    Sign up
-                  </Anchor>
-                </>
+                <Anchor component={Link} to="/login" {...NAV}>
+                  Sign in
+                </Anchor>
               )}
             </Group>
           </Group>
