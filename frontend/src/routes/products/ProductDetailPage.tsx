@@ -13,12 +13,16 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 
+import { setCartQuantity } from "../../api/cart";
 import { ApiError } from "../../api/client";
-import { productQuery } from "../../api/queries";
+import { cartKeys, cartQuery, productQuery } from "../../api/queries";
+import type { Product } from "../../api/types";
 import { formatPrice, thumbnailUrl } from "../../lib/format";
+import { withNext } from "../../lib/redirect";
+import { type Session, useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
 import classes from "./ProductDetailPage.module.css";
 
@@ -135,13 +139,94 @@ function ProductDetail({ productId }: { productId: number }) {
 
             <Divider />
 
-            <Text size="sm" c="dimmed">
-              Checkout arrives with the cart. Coins are demo currency — signup
-              starts you at 1,000.
-            </Text>
+            <AddToCart product={data} />
           </Stack>
         </SimpleGrid>
       )}
+    </Stack>
+  );
+}
+
+function AddToCart({ product }: { product: Product }) {
+  const session = useSession();
+
+  if (!session) {
+    return (
+      <Group>
+        <Button
+          component={Link}
+          to={withNext("/login", `/products/${product.id}`)}
+        >
+          Sign in to add to cart
+        </Button>
+      </Group>
+    );
+  }
+
+  return <AddToCartButton product={product} session={session} />;
+}
+
+function AddToCartButton({
+  product,
+  session,
+}: {
+  product: Product;
+  session: Session;
+}) {
+  const queryClient = useQueryClient();
+  const cart = useQuery(cartQuery(session.token));
+
+  const line = cart.data?.items.find((item) => item.product_id === product.id);
+  const quantity = line?.quantity ?? 0;
+
+  const add = useMutation({
+    mutationFn: () =>
+      setCartQuantity(session.token, {
+        productId: product.id,
+        quantity: quantity + 1,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: cartKeys.all }),
+  });
+
+  return (
+    <Stack gap="xs">
+      <Group gap="md">
+        <Button
+          onClick={() => add.mutate()}
+          loading={add.isPending}
+          disabled={cart.isPending || cart.isError}
+        >
+          Add to cart
+        </Button>
+        {quantity > 0 && (
+          <Anchor component={Link} to="/cart" size="sm">
+            View cart
+          </Anchor>
+        )}
+      </Group>
+
+      {quantity > 0 && (
+        <Text size="sm" c="dimmed">
+          {quantity} in your cart.
+        </Text>
+      )}
+
+      {add.isError && (
+        <Text size="sm" c="red.8">
+          {add.error.message}
+        </Text>
+      )}
+
+      {cart.isError && (
+        <Text size="sm" c="dimmed">
+          Could not read your cart, so the quantity is unknown. Reload the page
+          to try again.
+        </Text>
+      )}
+
+      <Text size="xs" c="dimmed">
+        Coins are demo currency, with no monetary value.
+      </Text>
     </Stack>
   );
 }

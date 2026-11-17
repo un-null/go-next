@@ -38,6 +38,12 @@ export function AppLayout() {
                 Products
               </Anchor>
 
+              {session && (
+                <Anchor component={Link} to="/cart" {...NAV}>
+                  Cart
+                </Anchor>
+              )}
+
               {session ? (
                 <Menu position="bottom-end" width={180}>
                   <Menu.Target>
