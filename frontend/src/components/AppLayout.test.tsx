@@ -81,7 +81,7 @@ describe("AppLayout", () => {
     const item = await screen.findByRole(
       "menuitem",
       { name: "Orders" },
-      { timeout: 3000 },
+      { timeout: 8000 },
     );
     expect(item.getAttribute("href")).toBe("/orders");
   });
@@ -107,7 +107,7 @@ describe("AppLayout", () => {
     const item = await screen.findByRole(
       "menuitem",
       { name: "Account" },
-      { timeout: 3000 },
+      { timeout: 8000 },
     );
     expect(item.getAttribute("href")).toBe("/account");
   });

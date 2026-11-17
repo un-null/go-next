@@ -1,9 +1,14 @@
 import { request } from "./client";
-import type { TransactionsResponse } from "./types";
+import type { ChargeResponse, TransactionsResponse } from "./types";
 
 export interface ListTransactionsParams {
   page?: number;
   limit?: number;
+}
+
+export interface ChargeCoinsInput {
+  amount: number;
+  description: string;
 }
 
 export function listTransactions(
@@ -16,5 +21,16 @@ export function listTransactions(
   });
   return request<TransactionsResponse>(`/api/coins/transactions?${query}`, {
     token,
+  });
+}
+
+export function chargeCoins(
+  token: string,
+  input: ChargeCoinsInput,
+): Promise<ChargeResponse> {
+  return request<ChargeResponse>("/api/coins/charge", {
+    method: "POST",
+    token,
+    body: input,
   });
 }

@@ -250,6 +250,12 @@ function Cart({ session }: { session: Session }) {
                   title="Could not place the order"
                 >
                   <Text size="sm">{checkout.error.message}</Text>
+                  {checkout.error instanceof ApiError &&
+                    checkout.error.status === 402 && (
+                      <Anchor component={Link} to="/account" size="sm">
+                        Add coins
+                      </Anchor>
+                    )}
                 </Alert>
               )}
 

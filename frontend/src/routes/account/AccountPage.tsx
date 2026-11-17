@@ -16,6 +16,7 @@ import { formatDate } from "../../lib/format";
 import { type Session, useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
 import { useUser } from "../../lib/useUser";
+import { ChargeForm } from "./ChargeForm";
 
 export function AccountPage() {
   const session = useSession();
@@ -57,6 +58,8 @@ function Account({ session }: { session: Session }) {
           </Stack>
         </Paper>
       )}
+
+      <ChargeForm session={session} />
 
       <div>
         <Title order={2} size="h4" mb="xs">

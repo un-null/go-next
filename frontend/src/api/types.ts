@@ -98,3 +98,9 @@ export interface TransactionsResponse {
   page: number;
   limit: number;
 }
+
+export interface ChargeResponse {
+  message: string;
+  user: User;
+  transaction: CoinTransaction;
+}
