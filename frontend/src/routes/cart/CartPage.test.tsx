@@ -230,6 +230,9 @@ describe("CartPage", () => {
     expect(await screen.findByText("Order placed")).toBeTruthy();
     expect(screen.getByText("ORD-7")).toBeTruthy();
     expect(screen.getByText("800 coins")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "View order" }).getAttribute("href"),
+    ).toBe("/orders/7");
     expect(getSession()?.user.coins).toBe(200);
   });
 

@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { getCart } from "./cart";
 import { getProduct, listProducts } from "./catalog";
-import { listOrders } from "./orders";
+import { getOrder, listOrders } from "./orders";
 
 export const productKeys = {
   all: ["products"] as const,
@@ -42,4 +42,12 @@ export const ordersQuery = (token: string, userId: string) =>
   queryOptions({
     queryKey: orderKeys.list(userId),
     queryFn: () => listOrders(token, userId),
+  });
+
+// The list response has no items; only this one does. Same key shape as the
+// products, so a detail page can be opened by id without knowing the user.
+export const orderQuery = (token: string, id: number) =>
+  queryOptions({
+    queryKey: orderKeys.detail(id),
+    queryFn: () => getOrder(token, id),
   });

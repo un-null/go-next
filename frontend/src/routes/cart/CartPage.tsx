@@ -411,6 +411,9 @@ function OrderPlaced({ order, session }: { order: Order; session: Session }) {
         <Button component={Link} to="/products">
           Keep shopping
         </Button>
+        <Button component={Link} to={`/orders/${order.id}`} variant="default">
+          View order
+        </Button>
       </Group>
     </Stack>
   );
