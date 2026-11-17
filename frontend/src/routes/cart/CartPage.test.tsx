@@ -7,8 +7,14 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { fetchMock, jsonResponse, lastCall, mockApi } from "../../api/testing";
-import type { CartItem, CartResponse, Product, User } from "../../api/types";
-import { setSession } from "../../lib/session";
+import type {
+  CartItem,
+  CartResponse,
+  Order,
+  Product,
+  User,
+} from "../../api/types";
+import { getSession, setSession } from "../../lib/session";
 import { CartPage } from "./CartPage";
 
 mockApi();
@@ -55,16 +61,33 @@ function cart(items: CartItem[]): CartResponse {
 
 const PRODUCTS = [product(1, "Monitor", 399.99), product(2, "Earbuds", 149.99)];
 
-function serve(cartResponse: CartResponse) {
-  fetchMock.mockImplementation(async (input) => {
+const ORDER: Order = {
+  id: 7,
+  user_id: USER.id,
+  order_number: "ORD-7",
+  total_amount: 799.98,
+  total_coins_used: 800,
+  status: "completed",
+  created_at: "2026-11-17T00:00:00Z",
+  updated_at: "2026-11-17T00:00:00Z",
+};
+
+function serve(
+  cartResponse: CartResponse,
+  order: () => Response = () => jsonResponse(ORDER, 201),
+) {
+  fetchMock.mockImplementation(async (input, init) => {
     const url = String(input);
     if (url.includes("/api/products")) {
       return jsonResponse(PRODUCTS);
     }
+    if (url.includes("/api/orders")) {
+      return order();
+    }
     if (url.includes("/api/cart")) {
       return jsonResponse(cartResponse);
     }
-    throw new Error(`unexpected request: ${url}`);
+    throw new Error(`unexpected request: ${url} ${init?.method}`);
   });
 }
 
@@ -161,6 +184,7 @@ describe("CartPage", () => {
   });
 
   it("shows the server's message when the cart cannot be read", async () => {
+    serve(cart([line(1, 1)]));
     fetchMock.mockImplementation(async (input) => {
       const url = String(input);
       if (url.includes("/api/products")) {
@@ -172,5 +196,69 @@ describe("CartPage", () => {
 
     expect(await screen.findByText("cart is unavailable")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+  });
+
+  it("sends every line to the server and keeps the server's numbers", async () => {
+    serve(cart([line(1, 2)]));
+    renderCart();
+
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Place order" }),
+    );
+
+    // A successful order invalidates the cart, so the last call is that GET.
+    const orderCall = () => {
+      const call = fetchMock.mock.calls.find(([input]) =>
+        String(input).includes("/api/orders"),
+      );
+      if (!call) {
+        throw new Error("no order request");
+      }
+      return { init: call[1], body: JSON.parse(String(call[1]?.body)) };
+    };
+
+    await waitFor(() =>
+      expect(orderCall().body).toEqual({
+        items: [{ product_id: 1, quantity: 2 }],
+      }),
+    );
+    expect(
+      (orderCall().init?.headers as Record<string, string>).Authorization,
+    ).toBe("Bearer jwt-value");
+
+    expect(await screen.findByText("Order placed")).toBeTruthy();
+    expect(screen.getByText("ORD-7")).toBeTruthy();
+    expect(screen.getByText("800 coins")).toBeTruthy();
+    expect(getSession()?.user.coins).toBe(200);
+  });
+
+  it("shows the server's reason when the order is refused", async () => {
+    serve(cart([line(1, 2)]), () =>
+      jsonResponse({ message: "insufficient coins" }, 402),
+    );
+    renderCart();
+
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Place order" }),
+    );
+
+    expect(await screen.findByText("insufficient coins")).toBeTruthy();
+    expect(screen.getByText("Estimated total")).toBeTruthy();
+  });
+
+  it("ends the session when the order comes back 401", async () => {
+    serve(cart([line(1, 1)]), () =>
+      jsonResponse({ message: "Invalid or expired token" }, 401),
+    );
+    renderCart();
+
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Place order" }),
+    );
+
+    await waitFor(() => expect(getSession()).toBeNull());
   });
 });

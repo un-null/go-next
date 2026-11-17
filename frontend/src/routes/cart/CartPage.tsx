@@ -16,11 +16,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 import { removeFromCart, setCartQuantity } from "../../api/cart";
+import { ApiError } from "../../api/client";
+import { createOrder } from "../../api/orders";
 import { cartKeys, cartQuery, productsQuery } from "../../api/queries";
-import type { CartItem, CartResponse, Product } from "../../api/types";
+import type { CartItem, CartResponse, Order, Product } from "../../api/types";
 import { cartTotals } from "../../lib/cartTotals";
 import { formatPrice, thumbnailUrl } from "../../lib/format";
-import { type Session, useSession } from "../../lib/session";
+import {
+  clearSession,
+  type Session,
+  setSession,
+  useSession,
+} from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
 
 const PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(
@@ -53,9 +60,6 @@ function Cart({ session }: { session: Session }) {
         ? setCartQuantity(session.token, { productId, quantity })
         : removeFromCart(session.token, productId),
 
-    // The quantity appears before the request finishes. On a free instance the
-    // first write can take twenty seconds, and a button that does nothing for
-    // that long reads as broken.
     onMutate: async ({ productId, quantity }) => {
       await queryClient.cancelQueries({ queryKey: cartKeys.all });
       const previous = queryClient.getQueryData<CartResponse>(cartKeys.all);
@@ -77,9 +81,40 @@ function Cart({ session }: { session: Session }) {
   );
   const totals = cartTotals(items, products.data);
 
+  const checkout = useMutation({
+    mutationFn: () =>
+      createOrder(session.token, {
+        items: items.map((item) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+        })),
+      }),
+
+    onSuccess: (order) => {
+      setSession({
+        ...session,
+        user: {
+          ...session.user,
+          coins: session.user.coins - order.total_coins_used,
+        },
+      });
+      queryClient.invalidateQueries({ queryKey: cartKeys.all });
+    },
+
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 401) {
+        clearSession();
+      }
+    },
+  });
+
   const isPending = cart.isPending || products.isPending;
   const isError = cart.isError || products.isError;
   const error = cart.error ?? products.error;
+
+  if (checkout.isSuccess) {
+    return <OrderPlaced order={checkout.data} session={session} />;
+  }
 
   if (isError) {
     return (
@@ -194,6 +229,26 @@ function Cart({ session }: { session: Session }) {
                     : `${totals.missing} items are no longer for sale and are not counted.`}
                 </Text>
               )}
+
+              {checkout.isError && (
+                <Alert
+                  color="red"
+                  variant="light"
+                  title="Could not place the order"
+                >
+                  <Text size="sm">{checkout.error.message}</Text>
+                </Alert>
+              )}
+
+              <Group justify="flex-end" mt="xs">
+                <Button
+                  onClick={() => checkout.mutate()}
+                  loading={checkout.isPending}
+                  disabled={totals.missing > 0}
+                >
+                  Place order
+                </Button>
+              </Group>
             </Stack>
           </Paper>
         </>
@@ -318,4 +373,45 @@ function withQuantity(
       : cart.items.filter((item) => item.product_id !== productId);
 
   return { ...cart, items, total_items: items.length };
+}
+
+function OrderPlaced({ order, session }: { order: Order; session: Session }) {
+  return (
+    <Stack gap="lg">
+      <Title order={1} size="h2">
+        Order placed
+      </Title>
+
+      <Paper withBorder p="md" radius="sm" maw={420}>
+        <Stack gap="xs">
+          <Group justify="space-between">
+            <Text size="sm">Order</Text>
+            <Text size="sm" ff="monospace">
+              {order.order_number}
+            </Text>
+          </Group>
+          <Group justify="space-between">
+            <Text size="sm">Paid</Text>
+            <Text size="sm" ff="monospace">
+              {order.total_coins_used.toLocaleString()} coins
+            </Text>
+          </Group>
+          <Group justify="space-between">
+            <Text size="sm" c="dimmed">
+              Balance
+            </Text>
+            <Text size="sm" c="dimmed" ff="monospace">
+              {session.user.coins.toLocaleString()} coins
+            </Text>
+          </Group>
+        </Stack>
+      </Paper>
+
+      <Group>
+        <Button component={Link} to="/products">
+          Keep shopping
+        </Button>
+      </Group>
+    </Stack>
+  );
 }
