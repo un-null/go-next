@@ -66,7 +66,6 @@ export function HomePage() {
   return (
     <Stack gap={56} pb="xl">
       <HowItWorks />
-      <Featured />
       <Stack gap="sm" align="center">
         {session ? (
           <Button component={Link} to="/products" size="md">
@@ -89,6 +88,7 @@ export function HomePage() {
           Coins are demo currency, with no monetary value.
         </Text>
       </Stack>
+      <Featured />
     </Stack>
   );
 }
