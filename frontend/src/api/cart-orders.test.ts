@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { addToCart, clearCart, getCart, removeFromCart } from "./cart";
+import { clearCart, getCart, removeFromCart, setCartQuantity } from "./cart";
 import { createOrder, getOrder, listOrders } from "./orders";
 import {
   captureError,
@@ -29,7 +29,7 @@ describe("cart", () => {
       jsonResponse({ success: true, message: "Product added to cart" }),
     );
 
-    await addToCart("jwt-value", { productId: 7, quantity: 2 });
+    await setCartQuantity("jwt-value", { productId: 7, quantity: 2 });
 
     expect(lastCall().init?.method).toBe("POST");
     expect(lastCall().body).toEqual({ product_id: 7, quantity: 2 });
