@@ -60,6 +60,9 @@ export function AppLayout() {
                     <Menu.Label>
                       {session.user.coins.toLocaleString()} coins
                     </Menu.Label>
+                    <Menu.Item component={Link} to="/orders">
+                      Orders
+                    </Menu.Item>
                     <Menu.Item onClick={signOut}>Sign out</Menu.Item>
                   </Menu.Dropdown>
                 </Menu>

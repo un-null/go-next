@@ -2,6 +2,7 @@
 import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -57,5 +58,16 @@ describe("AppLayout", () => {
     ).toBe("/cart");
     expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
     expect(screen.getByRole("button", { name: "Ada" })).toBeTruthy();
+  });
+
+  it("offers the order history from the account menu", async () => {
+    const user = userEvent.setup();
+    setSession({ token: "jwt-value", user: USER });
+    renderLayout();
+
+    await user.click(screen.getByRole("button", { name: "Ada" }));
+
+    const item = await screen.findByRole("menuitem", { name: "Orders" });
+    expect(item.getAttribute("href")).toBe("/orders");
   });
 });

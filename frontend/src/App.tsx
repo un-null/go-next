@@ -6,6 +6,7 @@ import { LoginPage } from "./routes/auth/LoginPage";
 import { SignupPage } from "./routes/auth/SignupPage";
 import { CartPage } from "./routes/cart/CartPage";
 import { HomePage } from "./routes/home/HomePage";
+import { OrdersPage } from "./routes/orders/OrdersPage";
 import { ProductDetailPage } from "./routes/products/ProductDetailPage";
 import { ProductsPage } from "./routes/products/ProductsPage";
 
@@ -21,6 +22,7 @@ export default function App() {
 
         <Route element={<RequireAuth />}>
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
         </Route>
       </Route>
     </Routes>

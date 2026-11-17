@@ -1,12 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { formatPrice, thumbnailUrl } from "./format";
+import { formatDate, formatPrice, thumbnailUrl } from "./format";
 
 describe("formatPrice", () => {
   it("shows cents and whole dollars the same way", () => {
     expect(formatPrice(699.99)).toBe("$699.99");
     expect(formatPrice(149.99)).toBe("$149.99");
     expect(formatPrice(50)).toBe("$50.00");
+  });
+});
+
+describe("formatDate", () => {
+  it("shows a readable date", () => {
+    expect(formatDate("2026-11-17T12:00:00Z")).toBe("Nov 17, 2026");
+  });
+
+  it("returns the input when it cannot be parsed", () => {
+    expect(formatDate("not a date")).toBe("not a date");
   });
 });
 
