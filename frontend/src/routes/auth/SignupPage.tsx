@@ -10,15 +10,18 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useMutation } from "@tanstack/react-query";
-import { Link, Navigate, useNavigate } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 
 import { login, type SignupInput, signup } from "../../api/auth";
+import { safeNext, withNext } from "../../lib/redirect";
 import { setSession, useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
 
 export function SignupPage() {
   const session = useSession();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next"));
 
   const form = useForm({
     initialValues: { name: "", email: "", password: "" },
@@ -37,14 +40,14 @@ export function SignupPage() {
     },
     onSuccess: (data) => {
       setSession({ token: data.token, user: data.user });
-      navigate("/products");
+      navigate(next, { replace: true });
     },
   });
 
   const isSlow = useSlowHint(createAccount.isPending);
 
   if (session) {
-    return <Navigate to="/products" replace />;
+    return <Navigate to={next} replace />;
   }
 
   return (
@@ -102,7 +105,7 @@ export function SignupPage() {
 
       <Text size="sm" c="dimmed">
         Already have an account?{" "}
-        <Anchor component={Link} to="/login">
+        <Anchor component={Link} to={withNext("/login", next)}>
           Sign in
         </Anchor>
       </Text>

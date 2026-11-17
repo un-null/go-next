@@ -10,15 +10,20 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useMutation } from "@tanstack/react-query";
-import { Link, Navigate, useNavigate } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 
 import { login } from "../../api/auth";
+import { safeNext, withNext } from "../../lib/redirect";
 import { setSession, useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
+
+export const DEMO = { email: "demo@go-next.dev", password: "go-next-demo" };
 
 export function LoginPage() {
   const session = useSession();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next"));
 
   const form = useForm({
     initialValues: { email: "", password: "" },
@@ -33,14 +38,16 @@ export function LoginPage() {
     mutationFn: login,
     onSuccess: (data) => {
       setSession({ token: data.token, user: data.user });
-      navigate("/products");
+      navigate(next, { replace: true });
     },
   });
 
   const isSlow = useSlowHint(signIn.isPending);
 
+  const isDemo = signIn.isPending && signIn.variables?.email === DEMO.email;
+
   if (session) {
-    return <Navigate to="/products" replace />;
+    return <Navigate to={next} replace />;
   }
 
   return (
@@ -76,7 +83,7 @@ export function LoginPage() {
             {...form.getInputProps("password")}
           />
 
-          <Button type="submit" fullWidth loading={signIn.isPending}>
+          <Button type="submit" fullWidth loading={signIn.isPending && !isDemo}>
             Sign in
           </Button>
 
@@ -89,9 +96,24 @@ export function LoginPage() {
         </Stack>
       </form>
 
+      <Stack gap={6}>
+        <Button
+          variant="default"
+          fullWidth
+          onClick={() => signIn.mutate(DEMO)}
+          loading={isDemo}
+        >
+          Use the demo account
+        </Button>
+        <Text size="xs" c="dimmed">
+          The demo account is shared. Its cart and coins are whatever the last
+          visitor left.
+        </Text>
+      </Stack>
+
       <Text size="sm" c="dimmed">
         No account yet?{" "}
-        <Anchor component={Link} to="/signup">
+        <Anchor component={Link} to={withNext("/signup", next)}>
           Create one
         </Anchor>
       </Text>

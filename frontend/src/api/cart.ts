@@ -1,7 +1,7 @@
 import { request } from "./client";
 import type { CartResponse } from "./types";
 
-export interface AddToCartInput {
+export interface SetCartQuantityInput {
   productId: number;
   quantity: number;
 }
@@ -10,9 +10,10 @@ export function getCart(token: string): Promise<CartResponse> {
   return request<CartResponse>("/api/cart", { token });
 }
 
-// The query string is the only place where the camelCase input meets the API's
-// snake_case. Converting at the boundary keeps the rest of the app in one case.
-export function addToCart(token: string, input: AddToCartInput): Promise<void> {
+export function setCartQuantity(
+  token: string,
+  input: SetCartQuantityInput,
+): Promise<void> {
   return request<void>("/api/cart", {
     method: "POST",
     token,

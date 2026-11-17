@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
+import { getCart } from "./cart";
 import { getProduct, listProducts } from "./catalog";
 
 export const productKeys = {
@@ -18,4 +19,14 @@ export const productQuery = (id: number) =>
   queryOptions({
     queryKey: productKeys.detail(id),
     queryFn: () => getProduct(id),
+  });
+
+export const cartKeys = {
+  all: ["cart"] as const,
+};
+
+export const cartQuery = (token: string) =>
+  queryOptions({
+    queryKey: cartKeys.all,
+    queryFn: () => getCart(token),
   });
