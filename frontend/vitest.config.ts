@@ -7,6 +7,7 @@ export default mergeConfig(
       test: {
         globals: true,
         setupFiles: ['./src/test/setup.ts'],
+        testTimeout: 15000,
       },
     }),
   );

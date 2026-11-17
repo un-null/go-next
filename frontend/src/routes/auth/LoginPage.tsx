@@ -17,6 +17,8 @@ import { safeNext, withNext } from "../../lib/redirect";
 import { setSession, useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
 
+export const DEMO = { email: "demo@go-next.dev", password: "go-next-demo" };
+
 export function LoginPage() {
   const session = useSession();
   const navigate = useNavigate();
@@ -41,6 +43,8 @@ export function LoginPage() {
   });
 
   const isSlow = useSlowHint(signIn.isPending);
+
+  const isDemo = signIn.isPending && signIn.variables?.email === DEMO.email;
 
   if (session) {
     return <Navigate to={next} replace />;
@@ -79,7 +83,7 @@ export function LoginPage() {
             {...form.getInputProps("password")}
           />
 
-          <Button type="submit" fullWidth loading={signIn.isPending}>
+          <Button type="submit" fullWidth loading={signIn.isPending && !isDemo}>
             Sign in
           </Button>
 
@@ -91,6 +95,21 @@ export function LoginPage() {
           )}
         </Stack>
       </form>
+
+      <Stack gap={6}>
+        <Button
+          variant="default"
+          fullWidth
+          onClick={() => signIn.mutate(DEMO)}
+          loading={isDemo}
+        >
+          Use the demo account
+        </Button>
+        <Text size="xs" c="dimmed">
+          The demo account is shared. Its cart and coins are whatever the last
+          visitor left.
+        </Text>
+      </Stack>
 
       <Text size="sm" c="dimmed">
         No account yet?{" "}
