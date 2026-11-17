@@ -18,8 +18,19 @@ import { Link } from "react-router";
 import { removeFromCart, setCartQuantity } from "../../api/cart";
 import { ApiError } from "../../api/client";
 import { createOrder } from "../../api/orders";
-import { cartKeys, cartQuery, productsQuery } from "../../api/queries";
-import type { CartItem, CartResponse, Order, Product } from "../../api/types";
+import {
+  cartKeys,
+  cartQuery,
+  productsQuery,
+  userKeys,
+} from "../../api/queries";
+import type {
+  CartItem,
+  CartResponse,
+  Order,
+  Product,
+  User,
+} from "../../api/types";
 import { cartTotals } from "../../lib/cartTotals";
 import { formatPrice, thumbnailUrl } from "../../lib/format";
 import {
@@ -29,6 +40,7 @@ import {
   useSession,
 } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
+import { useUser } from "../../lib/useUser";
 
 const PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="#e9ecef"/></svg>',
@@ -44,6 +56,7 @@ export function CartPage() {
 
 function Cart({ session }: { session: Session }) {
   const queryClient = useQueryClient();
+  const user = useUser();
   const cart = useQuery(cartQuery(session.token));
   const products = useQuery(productsQuery());
   const isSlow = useSlowHint(cart.isPending || products.isPending);
@@ -91,13 +104,13 @@ function Cart({ session }: { session: Session }) {
       }),
 
     onSuccess: (order) => {
-      setSession({
-        ...session,
-        user: {
-          ...session.user,
-          coins: session.user.coins - order.total_coins_used,
-        },
-      });
+      const coins = session.user.coins - order.total_coins_used;
+
+      setSession({ ...session, user: { ...session.user, coins } });
+      queryClient.setQueryData<User>(
+        userKeys.detail(session.user.id),
+        (current) => (current ? { ...current, coins } : current),
+      );
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
 
@@ -113,7 +126,7 @@ function Cart({ session }: { session: Session }) {
   const error = cart.error ?? products.error;
 
   if (checkout.isSuccess) {
-    return <OrderPlaced order={checkout.data} session={session} />;
+    return <OrderPlaced order={checkout.data} />;
   }
 
   if (isError) {
@@ -215,7 +228,7 @@ function Cart({ session }: { session: Session }) {
                   Your balance
                 </Text>
                 <Text size="sm" c="dimmed">
-                  {session.user.coins.toLocaleString()}
+                  {user?.coins.toLocaleString()}
                 </Text>
               </Group>
               <Text size="xs" c="dimmed">
@@ -375,7 +388,9 @@ function withQuantity(
   return { ...cart, items, total_items: items.length };
 }
 
-function OrderPlaced({ order, session }: { order: Order; session: Session }) {
+function OrderPlaced({ order }: { order: Order }) {
+  const user = useUser();
+
   return (
     <Stack gap="lg">
       <Title order={1} size="h2">
@@ -401,7 +416,7 @@ function OrderPlaced({ order, session }: { order: Order; session: Session }) {
               Balance
             </Text>
             <Text size="sm" c="dimmed" ff="monospace">
-              {session.user.coins.toLocaleString()} coins
+              {user?.coins.toLocaleString()} coins
             </Text>
           </Group>
         </Stack>

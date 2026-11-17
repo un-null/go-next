@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router";
 
 import { AppLayout } from "./components/AppLayout";
 import { RequireAuth } from "./components/RequireAuth";
+import { AccountPage } from "./routes/account/AccountPage";
 import { LoginPage } from "./routes/auth/LoginPage";
 import { SignupPage } from "./routes/auth/SignupPage";
 import { CartPage } from "./routes/cart/CartPage";
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/account" element={<AccountPage />} />
         </Route>
       </Route>
     </Routes>

@@ -4,11 +4,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { fetchMock, jsonResponse, mockApi } from "../api/testing";
 import type { User } from "../api/types";
 import { clearSession, setSession } from "../lib/session";
 import { AppLayout } from "./AppLayout";
+
+mockApi();
 
 const USER: User = {
   id: "0d6f3c1e-6a1b-4f2a-9f0e-2b7c5d8a1e33",
@@ -18,6 +21,14 @@ const USER: User = {
   created_at: "2026-11-01T00:00:00Z",
   updated_at: "2026-11-01T00:00:00Z",
 };
+
+function serve(user: User = USER) {
+  fetchMock.mockResolvedValue(jsonResponse(user));
+}
+
+beforeEach(() => {
+  serve();
+});
 
 function renderLayout() {
   return render(
@@ -67,7 +78,37 @@ describe("AppLayout", () => {
 
     await user.click(screen.getByRole("button", { name: "Ada" }));
 
-    const item = await screen.findByRole("menuitem", { name: "Orders" });
+    const item = await screen.findByRole(
+      "menuitem",
+      { name: "Orders" },
+      { timeout: 3000 },
+    );
     expect(item.getAttribute("href")).toBe("/orders");
+  });
+
+  it("shows the balance the server reports, not the one from sign-in", async () => {
+    const user = userEvent.setup();
+    serve({ ...USER, coins: 250 });
+    setSession({ token: "jwt-value", user: USER });
+    renderLayout();
+
+    await user.click(screen.getByRole("button", { name: "Ada" }));
+
+    expect(await screen.findByText("250 coins")).toBeTruthy();
+  });
+
+  it("offers the account page from the menu", async () => {
+    const user = userEvent.setup();
+    setSession({ token: "jwt-value", user: USER });
+    renderLayout();
+
+    await user.click(screen.getByRole("button", { name: "Ada" }));
+
+    const item = await screen.findByRole(
+      "menuitem",
+      { name: "Account" },
+      { timeout: 3000 },
+    );
+    expect(item.getAttribute("href")).toBe("/account");
   });
 });
