@@ -4,16 +4,23 @@ import type { Category, Product } from "./types";
 export interface ListProductsParams {
   page?: number;
   limit?: number;
+  q?: string;
 }
 
 export function listProducts({
   page = 1,
   limit = 10,
+  q = "",
 }: ListProductsParams = {}): Promise<Product[]> {
   const query = new URLSearchParams({
     page: String(page),
     limit: String(limit),
   });
+
+  if (q) {
+    query.set("q", q);
+  }
+
   return request<Product[]>(`/api/products?${query}`);
 }
 
