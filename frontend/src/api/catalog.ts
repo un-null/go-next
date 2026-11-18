@@ -5,12 +5,14 @@ export interface ListProductsParams {
   page?: number;
   limit?: number;
   q?: string;
+  category?: number;
 }
 
 export function listProducts({
   page = 1,
   limit = 10,
   q = "",
+  category,
 }: ListProductsParams = {}): Promise<Product[]> {
   const query = new URLSearchParams({
     page: String(page),
@@ -19,6 +21,9 @@ export function listProducts({
 
   if (q) {
     query.set("q", q);
+  }
+  if (category) {
+    query.set("category", String(category));
   }
 
   return request<Product[]>(`/api/products?${query}`);
