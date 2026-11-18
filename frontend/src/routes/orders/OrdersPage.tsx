@@ -15,18 +15,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 import { ordersQuery } from "../../api/queries";
-import type { Order, OrderStatus } from "../../api/types";
+import type { Order } from "../../api/types";
 import { formatDate, formatPrice } from "../../lib/format";
+import { STATUS_COLOR } from "../../lib/orderStatus";
 import { type Session, useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
 
 const SKELETONS = [0, 1, 2];
-
-const STATUS_COLOR: Record<OrderStatus, string> = {
-  completed: "teal",
-  pending: "yellow",
-  cancelled: "gray",
-};
 
 export function OrdersPage() {
   const session = useSession();

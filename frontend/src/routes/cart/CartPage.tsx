@@ -33,6 +33,7 @@ import type {
 } from "../../api/types";
 import { cartTotals } from "../../lib/cartTotals";
 import { formatPrice, thumbnailUrl } from "../../lib/format";
+import { placeholder } from "../../lib/placeholder";
 import {
   clearSession,
   type Session,
@@ -42,9 +43,7 @@ import {
 import { useSlowHint } from "../../lib/useSlowHint";
 import { useUser } from "../../lib/useUser";
 
-const PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="#e9ecef"/></svg>',
-)}`;
+const PLACEHOLDER = placeholder(200, 200);
 
 const SKELETONS = [0, 1, 2];
 
@@ -81,9 +80,12 @@ function Cart({ session }: { session: Session }) {
       );
       return { previous };
     },
-    onError: (_error, _input, context) => {
+    onError: (error, _input, context) => {
       if (context?.previous) {
         queryClient.setQueryData(cartKeys.all, context.previous);
+      }
+      if (error instanceof ApiError && error.status === 401) {
+        clearSession();
       }
     },
   });

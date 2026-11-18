@@ -21,14 +21,13 @@ import { ApiError } from "../../api/client";
 import { cartKeys, cartQuery, productQuery } from "../../api/queries";
 import type { Product } from "../../api/types";
 import { formatPrice, thumbnailUrl } from "../../lib/format";
+import { placeholder } from "../../lib/placeholder";
 import { withNext } from "../../lib/redirect";
-import { type Session, useSession } from "../../lib/session";
+import { clearSession, type Session, useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
 import classes from "./ProductDetailPage.module.css";
 
-const PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600"><rect width="900" height="600" fill="#e9ecef"/></svg>',
-)}`;
+const PLACEHOLDER = placeholder(900, 600);
 
 export function ProductDetailPage() {
   const { id } = useParams();
@@ -186,6 +185,11 @@ function AddToCartButton({
         quantity: quantity + 1,
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: cartKeys.all }),
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 401) {
+        clearSession();
+      }
+    },
   });
 
   return (
