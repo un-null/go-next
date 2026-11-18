@@ -9,7 +9,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useMutation } from "@tanstack/react-query";
+import { useActionState, useState, useTransition } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 
 import { login } from "../../api/auth";
@@ -18,6 +18,15 @@ import { setSession, useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
 
 export const DEMO = { email: "demo@go-next.dev", password: "go-next-demo" };
+
+interface SignInValues {
+  email: string;
+  password: string;
+}
+
+type SignInState = { status: "idle" } | { status: "error"; message: string };
+
+const IDLE: SignInState = { status: "idle" };
 
 export function LoginPage() {
   const session = useSession();
@@ -34,17 +43,41 @@ export function LoginPage() {
     },
   });
 
-  const signIn = useMutation({
-    mutationFn: login,
-    onSuccess: (data) => {
+  const signIn = async (
+    _previous: SignInState,
+    values: SignInValues,
+  ): Promise<SignInState> => {
+    try {
+      const data = await login(values);
       setSession({ token: data.token, user: data.user });
       navigate(next, { replace: true });
-    },
+      return IDLE;
+    } catch (error) {
+      return {
+        status: "error",
+        message: error instanceof Error ? error.message : "Could not sign in",
+      };
+    }
+  };
+
+  const [state, dispatch, isPending] = useActionState(signIn, IDLE);
+  const [, startTransition] = useTransition();
+
+  const [isDemo, setIsDemo] = useState(false);
+
+  const submit = form.onSubmit((values) => {
+    if (isPending) return;
+    setIsDemo(false);
+    startTransition(() => dispatch(values));
   });
 
-  const isSlow = useSlowHint(signIn.isPending);
+  const signInAsDemo = () => {
+    if (isPending) return;
+    setIsDemo(true);
+    startTransition(() => dispatch(DEMO));
+  };
 
-  const isDemo = signIn.isPending && signIn.variables?.email === DEMO.email;
+  const isSlow = useSlowHint(isPending);
 
   if (session) {
     return <Navigate to={next} replace />;
@@ -61,13 +94,13 @@ export function LoginPage() {
         </Text>
       </div>
 
-      {signIn.isError && (
+      {state.status === "error" && (
         <Alert color="red" variant="light" title="Could not sign in">
-          <Text size="sm">{signIn.error.message}</Text>
+          <Text size="sm">{state.message}</Text>
         </Alert>
       )}
 
-      <form onSubmit={form.onSubmit((values) => signIn.mutate(values))}>
+      <form onSubmit={submit}>
         <Stack gap="sm">
           <TextInput
             label="Email"
@@ -83,7 +116,7 @@ export function LoginPage() {
             {...form.getInputProps("password")}
           />
 
-          <Button type="submit" fullWidth loading={signIn.isPending && !isDemo}>
+          <Button type="submit" fullWidth loading={isPending && !isDemo}>
             Sign in
           </Button>
 
@@ -100,8 +133,8 @@ export function LoginPage() {
         <Button
           variant="default"
           fullWidth
-          onClick={() => signIn.mutate(DEMO)}
-          loading={isDemo}
+          onClick={signInAsDemo}
+          loading={isPending && isDemo}
         >
           Use the demo account
         </Button>
