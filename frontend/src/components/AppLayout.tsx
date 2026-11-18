@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link, Outlet, useNavigate } from "react-router";
 
 import { clearSession, useSession } from "../lib/session";
+import { useUser } from "../lib/useUser";
 
 const NAV = {
   size: "xs",
@@ -13,6 +14,7 @@ const NAV = {
 
 export function AppLayout() {
   const session = useSession();
+  const user = useUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -53,13 +55,19 @@ export function AppLayout() {
                       {...NAV}
                       c="dark.9"
                     >
-                      {session.user.name}
+                      {user?.name}
                     </Anchor>
                   </Menu.Target>
                   <Menu.Dropdown>
                     <Menu.Label>
-                      {session.user.coins.toLocaleString()} coins
+                      {user?.coins.toLocaleString()} coins
                     </Menu.Label>
+                    <Menu.Item component={Link} to="/orders">
+                      Orders
+                    </Menu.Item>
+                    <Menu.Item component={Link} to="/account">
+                      Account
+                    </Menu.Item>
                     <Menu.Item onClick={signOut}>Sign out</Menu.Item>
                   </Menu.Dropdown>
                 </Menu>

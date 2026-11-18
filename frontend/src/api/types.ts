@@ -79,3 +79,28 @@ export interface Order {
 export interface CreateOrderInput {
   items: { product_id: number; quantity: number }[];
 }
+
+export type TransactionType = "charge" | "purchase" | "refund";
+
+export interface CoinTransaction {
+  id: number;
+  user_id: string;
+  transaction_type: TransactionType;
+  amount: number;
+  balance_after: number;
+  order_id?: number;
+  description: string;
+  created_at: string;
+}
+
+export interface TransactionsResponse {
+  transactions: CoinTransaction[];
+  page: number;
+  limit: number;
+}
+
+export interface ChargeResponse {
+  message: string;
+  user: User;
+  transaction: CoinTransaction;
+}
