@@ -15,16 +15,16 @@ func NewProductUseCase(r repository.ProductRepository) *ProductUseCase {
 	return &ProductUseCase{repo: r}
 }
 
-func (u *ProductUseCase) GetAllProducts(ctx context.Context, page, limit int) ([]entity.Product, error) {
-	return u.repo.GetAllProducts(ctx, page, limit)
+func (u *ProductUseCase) GetAllProducts(ctx context.Context, q string, page, limit int) ([]entity.Product, error) {
+	return u.repo.GetAllProducts(ctx, q, page, limit)
 }
 
 func (u *ProductUseCase) GetProductByID(ctx context.Context, id int) (*entity.Product, error) {
 	return u.repo.GetProductByID(ctx, id)
 }
 
-func (u *ProductUseCase) GetProductsByCategory(ctx context.Context, categoryID, page, limit int) ([]entity.Product, error) {
-	return u.repo.GetProductsByCategory(ctx, categoryID, page, limit)
+func (u *ProductUseCase) GetProductsByCategory(ctx context.Context, categoryID int, q string, page, limit int) ([]entity.Product, error) {
+	return u.repo.GetProductsByCategory(ctx, categoryID, q, page, limit)
 }
 
 func (u *ProductUseCase) UpdateStock(ctx context.Context, productID, newStock int) error {

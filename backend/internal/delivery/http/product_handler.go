@@ -25,6 +25,8 @@ func (h *ProductHandler) RegisterRoutes(g *echo.Group) {
 func (h *ProductHandler) GetProducts(c echo.Context) error {
 	ctx := c.Request().Context()
 
+	q := c.QueryParam("q")
+
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil || page < 1 {
 		page = 1
@@ -35,7 +37,7 @@ func (h *ProductHandler) GetProducts(c echo.Context) error {
 		limit = 10
 	}
 
-	products, err := h.productUseCase.GetAllProducts(ctx, page, limit)
+	products, err := h.productUseCase.GetAllProducts(ctx, q, page, limit)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}

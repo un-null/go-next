@@ -37,6 +37,9 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByIDForUpdate(ctx context.Context, id pgtype.UUID) (User, error)
+	// An empty q means "no filter". Matching is case-insensitive and substring,
+	// which is what a catalogue search box is expected to do; % and _ stay
+	// wildcards, so a stray percent widens the result rather than crashing.
 	// Newest first, with id as the tiebreaker. The seed inserts every row in one
 	// transaction, so created_at is identical and the order would otherwise be
 	// whatever the heap returns that day — which is how a product ended up on

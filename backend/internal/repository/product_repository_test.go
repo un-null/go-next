@@ -28,7 +28,7 @@ func NewTestProductRepository(queries *mocks.MockProductQueries) ProductReposito
 	}
 }
 
-func (r *testProductRepository) GetAllProducts(ctx context.Context, page, limit int) ([]entity.Product, error) {
+func (r *testProductRepository) GetAllProducts(ctx context.Context, q string, page, limit int) ([]entity.Product, error) {
 	offset := (page - 1) * limit
 
 	dbProducts, err := r.queries.ListProducts(ctx, database.ListProductsParams{
@@ -56,7 +56,7 @@ func (r *testProductRepository) GetProductByID(ctx context.Context, id int) (*en
 	return dbProductToEntity(dbProduct), nil // Use existing function
 }
 
-func (r *testProductRepository) GetProductsByCategory(ctx context.Context, categoryID, page, limit int) ([]entity.Product, error) {
+func (r *testProductRepository) GetProductsByCategory(ctx context.Context, categoryID int, q string, page, limit int) ([]entity.Product, error) {
 	offset := (page - 1) * limit
 
 	dbProducts, err := r.queries.ListProductsByCategory(ctx, database.ListProductsByCategoryParams{
@@ -126,7 +126,7 @@ func TestGetAllProducts(t *testing.T) {
 	mockQ.On("ListProducts", mock.Anything, database.ListProductsParams{Limit: 10, Offset: 0}).
 		Return(dbProducts, nil)
 
-	products, err := repo.GetAllProducts(context.Background(), 1, 10)
+	products, err := repo.GetAllProducts(context.Background(), "", 1, 10)
 	assert.NoError(t, err)
 	assert.Len(t, products, 2)
 	assert.Equal(t, "Apple", products[0].Name)
@@ -144,7 +144,7 @@ func TestGetAllProducts_WithPagination(t *testing.T) {
 	mockQ.On("ListProducts", mock.Anything, database.ListProductsParams{Limit: 5, Offset: 5}).
 		Return(dbProducts, nil)
 
-	products, err := repo.GetAllProducts(context.Background(), 2, 5)
+	products, err := repo.GetAllProducts(context.Background(), "", 2, 5)
 	assert.NoError(t, err)
 	assert.Len(t, products, 1)
 	assert.Equal(t, "Orange", products[0].Name)
@@ -195,7 +195,7 @@ func TestGetProductsByCategory_Success(t *testing.T) {
 		Offset:     0,
 	}).Return(dbProducts, nil)
 
-	products, err := repo.GetProductsByCategory(context.Background(), categoryID, 1, 10)
+	products, err := repo.GetProductsByCategory(context.Background(), categoryID, "", 1, 10)
 	assert.NoError(t, err)
 	assert.Len(t, products, 2)
 	assert.Equal(t, "Apple", products[0].Name)
@@ -217,7 +217,7 @@ func TestGetProductsByCategory_WithPagination(t *testing.T) {
 		Offset:     4,
 	}).Return(dbProducts, nil)
 
-	products, err := repo.GetProductsByCategory(context.Background(), categoryID, 3, 2)
+	products, err := repo.GetProductsByCategory(context.Background(), categoryID, "", 3, 2)
 	assert.NoError(t, err)
 	assert.Len(t, products, 1)
 	assert.Equal(t, "Orange", products[0].Name)
@@ -235,7 +235,7 @@ func TestGetProductsByCategory_Empty(t *testing.T) {
 		Offset:     0,
 	}).Return([]database.Product{}, nil)
 
-	products, err := repo.GetProductsByCategory(context.Background(), categoryID, 1, 10)
+	products, err := repo.GetProductsByCategory(context.Background(), categoryID, "", 1, 10)
 	assert.NoError(t, err)
 	assert.Len(t, products, 0)
 

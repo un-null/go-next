@@ -12,9 +12,9 @@ import (
 )
 
 type ProductRepository interface {
-	GetAllProducts(ctx context.Context, page, limit int) ([]entity.Product, error)
+	GetAllProducts(ctx context.Context, q string, page, limit int) ([]entity.Product, error)
 	GetProductByID(ctx context.Context, id int) (*entity.Product, error)
-	GetProductsByCategory(ctx context.Context, categoryID, page, limit int) ([]entity.Product, error)
+	GetProductsByCategory(ctx context.Context, categoryID int, q string, page, limit int) ([]entity.Product, error)
 	UpdateStock(ctx context.Context, productID, newStock int) error
 }
 
@@ -28,10 +28,11 @@ func NewProductRepository(queries *database.Queries) *productRepository {
 	}
 }
 
-func (r *productRepository) GetAllProducts(ctx context.Context, page, limit int) ([]entity.Product, error) {
+func (r *productRepository) GetAllProducts(ctx context.Context, q string, page, limit int) ([]entity.Product, error) {
 	offset := (page - 1) * limit
 
 	dbProducts, err := r.queries.ListProducts(ctx, database.ListProductsParams{
+		Q:      q,
 		Limit:  int32(limit),
 		Offset: int32(offset),
 	})
@@ -56,11 +57,12 @@ func (r *productRepository) GetProductByID(ctx context.Context, id int) (*entity
 	return dbProductToEntity(dbProduct), nil
 }
 
-func (r *productRepository) GetProductsByCategory(ctx context.Context, categoryID, page, limit int) ([]entity.Product, error) {
+func (r *productRepository) GetProductsByCategory(ctx context.Context, categoryID int, q string, page, limit int) ([]entity.Product, error) {
 	offset := (page - 1) * limit
 
 	dbProducts, err := r.queries.ListProductsByCategory(ctx, database.ListProductsByCategoryParams{
 		CategoryID: int32(categoryID),
+		Q:          q,
 		Limit:      int32(limit),
 		Offset:     int32(offset),
 	})

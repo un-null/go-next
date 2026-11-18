@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { getCart } from "./cart";
 import { getProduct, listProducts } from "./catalog";
@@ -8,14 +8,15 @@ import { getUser } from "./users";
 
 export const productKeys = {
   all: ["products"] as const,
-  list: () => [...productKeys.all, "list"] as const,
+  list: (q = "") => [...productKeys.all, "list", q] as const,
   detail: (id: number) => [...productKeys.all, "detail", id] as const,
 };
 
-export const productsQuery = () =>
+export const productsQuery = (q = "") =>
   queryOptions({
-    queryKey: productKeys.list(),
-    queryFn: () => listProducts({ limit: 100 }),
+    queryKey: productKeys.list(q),
+    queryFn: () => listProducts({ limit: 100, q }),
+    placeholderData: keepPreviousData,
   });
 
 export const productQuery = (id: number) =>

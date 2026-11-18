@@ -9,7 +9,8 @@ mockApi();
 describe("productKeys", () => {
   it("keeps every product query under one prefix", () => {
     expect(productKeys.all).toEqual(["products"]);
-    expect(productKeys.list()).toEqual(["products", "list"]);
+    expect(productKeys.list()).toEqual(["products", "list", ""]);
+    expect(productKeys.list("laptop")).toEqual(["products", "list", "laptop"]);
     expect(productKeys.detail(3)).toEqual(["products", "detail", 3]);
   });
 
