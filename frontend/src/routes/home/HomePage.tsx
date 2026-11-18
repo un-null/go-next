@@ -84,9 +84,6 @@ export function HomePage() {
             </Text>
           </>
         )}
-        <Text size="xs" c="dimmed">
-          Coins are demo currency, with no monetary value.
-        </Text>
       </Stack>
       <Featured />
     </Stack>
