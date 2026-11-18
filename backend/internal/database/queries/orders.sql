@@ -12,4 +12,4 @@ WHERE id = $1;
 SELECT id, user_id, order_number, total_amount, total_coins_used, status, created_at, updated_at
 FROM "orders"
 WHERE user_id = $1
-ORDER BY created_at DESC;
+ORDER BY created_at DESC, id DESC;

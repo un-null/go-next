@@ -7,7 +7,7 @@ RETURNING id, user_id, transaction_type, amount, balance_after, order_id, descri
 SELECT id, user_id, transaction_type, amount, balance_after, order_id, description, created_at
 FROM coin_transactions
 WHERE user_id = $1
-ORDER BY created_at DESC
+ORDER BY created_at DESC, id DESC
 LIMIT $2 OFFSET $3;
 
 -- name: GetCoinTransactionByID :one

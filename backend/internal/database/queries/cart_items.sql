@@ -7,7 +7,7 @@ RETURNING id, user_id, product_id, quantity, created_at, updated_at;
 SELECT id, user_id, product_id, quantity, created_at, updated_at
 FROM cart_items
 WHERE user_id = $1
-ORDER BY created_at DESC;
+ORDER BY created_at DESC, id DESC;
 
 -- name: UpdateCartItemQuantity :one
 UPDATE cart_items
