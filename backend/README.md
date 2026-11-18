@@ -8,6 +8,8 @@ A small shop API where prices are paid in coins. Go 1.23, Echo, pgx, sqlc, Postg
 The free instance sleeps after fifteen minutes of inactivity, so the first request takes twenty to
 twenty-five seconds. The SPA shows a hint after three.
 
+![Backend layers](architecture.png)
+
 ## The checkout transaction
 
 `POST /api/orders` is the part worth reading. Four things happen inside one transaction:

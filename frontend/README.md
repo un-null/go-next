@@ -9,6 +9,8 @@ account. Vite, Mantine, TanStack Query, React Router.
 The API runs on Render's free tier, so the first request after fifteen minutes can take twenty
 seconds. The UI says so after three.
 
+![Frontend data flow](architecture.png)
+
 ## Run it locally
 
 ```sh
