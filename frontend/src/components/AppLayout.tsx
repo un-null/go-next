@@ -1,5 +1,6 @@
 import { Anchor, AppShell, Container, Group, Menu, Text } from "@mantine/core";
 import { useQueryClient } from "@tanstack/react-query";
+import BoringAvatar from "boring-avatars";
 import { Link, Outlet, useNavigate } from "react-router";
 
 import { clearSession, useSession } from "../lib/session";
@@ -52,10 +53,14 @@ export function AppLayout() {
                     <Anchor
                       component="button"
                       type="button"
-                      {...NAV}
-                      c="dark.9"
+                      aria-label={user?.name ?? "Account"}
+                      style={{ display: "flex" }}
                     >
-                      {user?.name}
+                      <BoringAvatar
+                        name={user?.name ?? ""}
+                        size={28}
+                        variant="marble"
+                      />
                     </Anchor>
                   </Menu.Target>
                   <Menu.Dropdown>
