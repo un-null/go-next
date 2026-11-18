@@ -22,7 +22,7 @@ func TestListProductsPagesDoNotOverlap(t *testing.T) {
 
 	var ids []int
 	for page := 1; page <= 3; page++ {
-		found, err := products.GetAllProducts(ctx, page, limit)
+		found, err := products.GetAllProducts(ctx, "", page, limit)
 		require.NoError(t, err)
 
 		for _, product := range found {
@@ -35,4 +35,25 @@ func TestListProductsPagesDoNotOverlap(t *testing.T) {
 		10, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 	}
 	require.Equal(t, want, ids)
+}
+
+func TestSearchProductsByKeyword(t *testing.T) {
+	pool := setupIntegrationDB(t)
+	queries := database.New(pool)
+	products := NewProductUseCase(repository.NewProductRepository(queries))
+
+	ctx := context.Background()
+
+	found, err := products.GetAllProducts(ctx, "laptop", 1, 10)
+	require.NoError(t, err)
+	require.Len(t, found, 1)
+	require.Equal(t, "Gaming Laptop G15", found[0].Name)
+
+	found, err = products.GetAllProducts(ctx, "LAPTOP", 1, 10)
+	require.NoError(t, err)
+	require.Len(t, found, 1)
+
+	found, err = products.GetAllProducts(ctx, "zzz", 1, 10)
+	require.NoError(t, err)
+	require.Empty(t, found)
 }

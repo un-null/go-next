@@ -17,8 +17,8 @@ type MockProductRepository struct {
 	mock.Mock
 }
 
-func (m *MockProductRepository) GetAllProducts(ctx context.Context, page, limit int) ([]entity.Product, error) {
-	args := m.Called(ctx, page, limit)
+func (m *MockProductRepository) GetAllProducts(ctx context.Context, q string, page, limit int) ([]entity.Product, error) {
+	args := m.Called(ctx, q, page, limit)
 	return args.Get(0).([]entity.Product), args.Error(1)
 }
 
@@ -30,8 +30,8 @@ func (m *MockProductRepository) GetProductByID(ctx context.Context, id int) (*en
 	return args.Get(0).(*entity.Product), args.Error(1)
 }
 
-func (m *MockProductRepository) GetProductsByCategory(ctx context.Context, categoryID, page, limit int) ([]entity.Product, error) {
-	args := m.Called(ctx, categoryID, page, limit)
+func (m *MockProductRepository) GetProductsByCategory(ctx context.Context, categoryID int, q string, page, limit int) ([]entity.Product, error) {
+	args := m.Called(ctx, categoryID, q, page, limit)
 	return args.Get(0).([]entity.Product), args.Error(1)
 }
 
@@ -67,9 +67,9 @@ func TestGetAllProducts(t *testing.T) {
 		sampleProduct(2, "Banana"),
 	}
 
-	mockRepo.On("GetAllProducts", mock.Anything, 1, 10).Return(expectedProducts, nil)
+	mockRepo.On("GetAllProducts", mock.Anything, "", 1, 10).Return(expectedProducts, nil)
 
-	products, err := uc.GetAllProducts(context.Background(), 1, 10)
+	products, err := uc.GetAllProducts(context.Background(), "", 1, 10)
 
 	assert.NoError(t, err)
 	assert.Len(t, products, 2)
@@ -120,9 +120,9 @@ func TestGetProductsByCategory(t *testing.T) {
 		sampleProduct(2, "MacBook"),
 	}
 
-	mockRepo.On("GetProductsByCategory", mock.Anything, 1, 1, 10).Return(expectedProducts, nil)
+	mockRepo.On("GetProductsByCategory", mock.Anything, 1, "", 1, 10).Return(expectedProducts, nil)
 
-	products, err := uc.GetProductsByCategory(context.Background(), 1, 1, 10)
+	products, err := uc.GetProductsByCategory(context.Background(), 1, "", 1, 10)
 
 	assert.NoError(t, err)
 	assert.Len(t, products, 2)

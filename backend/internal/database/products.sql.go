@@ -66,21 +66,26 @@ const listProducts = `-- name: ListProducts :many
 SELECT id, category_id, name, description, price, stock_quantity, image_url,
        average_rating, total_comments, created_at, updated_at
 FROM products
+WHERE name ILIKE '%' || $1::text || '%'
 ORDER BY created_at DESC, id DESC
-LIMIT $1 OFFSET $2
+LIMIT $3 OFFSET $2
 `
 
 type ListProductsParams struct {
-	Limit  int32 `db:"limit" json:"limit"`
-	Offset int32 `db:"offset" json:"offset"`
+	Q      string `db:"q" json:"q"`
+	Offset int32  `db:"offset" json:"offset"`
+	Limit  int32  `db:"limit" json:"limit"`
 }
 
+// An empty q means "no filter". Matching is case-insensitive and substring,
+// which is what a catalogue search box is expected to do; % and _ stay
+// wildcards, so a stray percent widens the result rather than crashing.
 // Newest first, with id as the tiebreaker. The seed inserts every row in one
 // transaction, so created_at is identical and the order would otherwise be
 // whatever the heap returns that day — which is how a product ended up on
 // every page.
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
-	rows, err := q.db.Query(ctx, listProducts, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listProducts, arg.Q, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -116,18 +121,25 @@ SELECT id, category_id, name, description, price, stock_quantity, image_url,
        average_rating, total_comments, created_at, updated_at
 FROM products
 WHERE category_id = $1
+  AND name ILIKE '%' || $2::text || '%'
 ORDER BY created_at DESC, id DESC
-LIMIT $2 OFFSET $3
+LIMIT $4 OFFSET $3
 `
 
 type ListProductsByCategoryParams struct {
-	CategoryID int32 `db:"category_id" json:"category_id"`
-	Limit      int32 `db:"limit" json:"limit"`
-	Offset     int32 `db:"offset" json:"offset"`
+	CategoryID int32  `db:"category_id" json:"category_id"`
+	Q          string `db:"q" json:"q"`
+	Offset     int32  `db:"offset" json:"offset"`
+	Limit      int32  `db:"limit" json:"limit"`
 }
 
 func (q *Queries) ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error) {
-	rows, err := q.db.Query(ctx, listProductsByCategory, arg.CategoryID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listProductsByCategory,
+		arg.CategoryID,
+		arg.Q,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
