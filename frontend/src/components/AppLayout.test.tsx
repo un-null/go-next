@@ -1,8 +1,13 @@
 // @vitest-environment jsdom
 import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -50,6 +55,14 @@ afterEach(() => {
   act(() => clearSession());
 });
 
+async function openMenu() {
+  const trigger = screen.getByRole("button", { name: "Ada" });
+  fireEvent.click(trigger);
+  await waitFor(() => {
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  });
+}
+
 describe("AppLayout", () => {
   it("keeps the cart out of the header for a guest", () => {
     renderLayout();
@@ -72,11 +85,10 @@ describe("AppLayout", () => {
   });
 
   it("offers the order history from the account menu", async () => {
-    const user = userEvent.setup();
     setSession({ token: "jwt-value", user: USER });
     renderLayout();
 
-    await user.click(screen.getByRole("button", { name: "Ada" }));
+    await openMenu();
 
     const item = await screen.findByRole(
       "menuitem",
@@ -87,22 +99,20 @@ describe("AppLayout", () => {
   });
 
   it("shows the balance the server reports, not the one from sign-in", async () => {
-    const user = userEvent.setup();
     serve({ ...USER, coins: 250 });
     setSession({ token: "jwt-value", user: USER });
     renderLayout();
 
-    await user.click(screen.getByRole("button", { name: "Ada" }));
+    await openMenu();
 
     expect(await screen.findByText("250 coins")).toBeTruthy();
   });
 
   it("offers the account page from the menu", async () => {
-    const user = userEvent.setup();
     setSession({ token: "jwt-value", user: USER });
     renderLayout();
 
-    await user.click(screen.getByRole("button", { name: "Ada" }));
+    await openMenu();
 
     const item = await screen.findByRole(
       "menuitem",
