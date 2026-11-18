@@ -9,13 +9,17 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useMutation } from "@tanstack/react-query";
+import { useActionState, useTransition } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 
 import { login, type SignupInput, signup } from "../../api/auth";
 import { safeNext, withNext } from "../../lib/redirect";
 import { setSession, useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
+
+type SignupState = { status: "idle" } | { status: "error"; message: string };
+
+const IDLE: SignupState = { status: "idle" };
 
 export function SignupPage() {
   const session = useSession();
@@ -33,18 +37,39 @@ export function SignupPage() {
     },
   });
 
-  const createAccount = useMutation({
-    mutationFn: async (values: SignupInput) => {
+  const createAccount = async (
+    _previous: SignupState,
+    values: SignupInput,
+  ): Promise<SignupState> => {
+    try {
       await signup(values);
-      return login({ email: values.email, password: values.password });
-    },
-    onSuccess: (data) => {
+      const data = await login({
+        email: values.email,
+        password: values.password,
+      });
       setSession({ token: data.token, user: data.user });
       navigate(next, { replace: true });
-    },
+      return IDLE;
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not create the account",
+      };
+    }
+  };
+
+  const [state, dispatch, isPending] = useActionState(createAccount, IDLE);
+  const [, startTransition] = useTransition();
+
+  const submit = form.onSubmit((values) => {
+    if (isPending) return;
+    startTransition(() => dispatch(values));
   });
 
-  const isSlow = useSlowHint(createAccount.isPending);
+  const isSlow = useSlowHint(isPending);
 
   if (session) {
     return <Navigate to={next} replace />;
@@ -61,13 +86,13 @@ export function SignupPage() {
         </Text>
       </div>
 
-      {createAccount.isError && (
+      {state.status === "error" && (
         <Alert color="red" variant="light" title="Could not create the account">
-          <Text size="sm">{createAccount.error.message}</Text>
+          <Text size="sm">{state.message}</Text>
         </Alert>
       )}
 
-      <form onSubmit={form.onSubmit((values) => createAccount.mutate(values))}>
+      <form onSubmit={submit}>
         <Stack gap="sm">
           <TextInput
             label="Name"
@@ -90,7 +115,7 @@ export function SignupPage() {
             {...form.getInputProps("password")}
           />
 
-          <Button type="submit" fullWidth loading={createAccount.isPending}>
+          <Button type="submit" fullWidth loading={isPending}>
             Create account
           </Button>
 
