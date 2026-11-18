@@ -1,0 +1,21 @@
+-- Put back exactly what 000013 seeded, duplicate groups and stale URLs included.
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5' WHERE id = 1;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1585386959984-a41552231693' WHERE id = 2;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1587202372775-98973f1b64b8' WHERE id = 3;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8' WHERE id = 4;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8' WHERE id = 5;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1512499617640-c2f999098c01' WHERE id = 6;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c' WHERE id = 7;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1553729784-e91953dec042' WHERE id = 8;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1553729784-e91953dec042' WHERE id = 9;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1507842217343-583bb7270b66' WHERE id = 10;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da' WHERE id = 11;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1507842217343-583bb7270b66' WHERE id = 12;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1553729784-e91953dec042' WHERE id = 13;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab' WHERE id = 14;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1582418702059-97ebafb35d09' WHERE id = 15;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1551024601-bec78aea704b' WHERE id = 16;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1528701800489-20be9c7e6d8f' WHERE id = 17;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1520975918313-60fdbd8d9b8c' WHERE id = 18;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1520975918313-60fdbd8d9b8c' WHERE id = 19;
+UPDATE products SET image_url = 'https://images.unsplash.com/photo-1520975918313-60fdbd8d9b8c' WHERE id = 20;
