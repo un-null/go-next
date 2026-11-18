@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { fetchMock, jsonResponse, mockApi } from "../../api/testing";
+import { deferred, fetchMock, jsonResponse, mockApi } from "../../api/testing";
 import type { User } from "../../api/types";
 import { clearSession, getSession } from "../../lib/session";
 import { SignupPage } from "./SignupPage";
@@ -119,5 +119,53 @@ describe("SignupPage", () => {
 
     expect(await screen.findByText("At least 8 characters")).not.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("holds the form while the request is in flight", async () => {
+    const gate = deferred<Response>();
+    fetchMock.mockImplementation((input) =>
+      String(input).endsWith("/api/signup")
+        ? gate.promise
+        : Promise.resolve(jsonResponse({ token: "jwt-value", user: USER })),
+    );
+
+    renderSignup("/signup?next=%2Fcart");
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/^Name/), "Ada");
+    await user.type(screen.getByLabelText(/^Email/), "ada@example.com");
+    const password = screen.getByLabelText(/^Password/);
+    await user.type(password, "correct horse");
+
+    const button = screen.getByRole("button", { name: "Create account" });
+    await user.click(button);
+
+    expect(button.hasAttribute("disabled")).toBe(true);
+
+    await user.click(button);
+    await user.type(password, "{Enter}");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    gate.resolve(
+      jsonResponse({ message: "User created successfully", user: USER }, 201),
+    );
+
+    expect(await screen.findByText("the cart")).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("submits from the keyboard when nothing is pending", async () => {
+    serveSignup();
+
+    renderSignup("/signup?next=%2Fcart");
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/^Name/), "Ada");
+    await user.type(screen.getByLabelText(/^Email/), "ada@example.com");
+    await user.type(screen.getByLabelText(/^Password/), "correct horse{Enter}");
+
+    expect(await screen.findByText("the cart")).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

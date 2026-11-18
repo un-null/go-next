@@ -6,7 +6,13 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { fetchMock, jsonResponse, lastCall, mockApi } from "../../api/testing";
+import {
+  deferred,
+  fetchMock,
+  jsonResponse,
+  lastCall,
+  mockApi,
+} from "../../api/testing";
 import type { User } from "../../api/types";
 import { clearSession, getSession } from "../../lib/session";
 import { DEMO, LoginPage } from "./LoginPage";
@@ -114,5 +120,46 @@ describe("LoginPage", () => {
 
     expect(await screen.findByText("Enter an email address")).not.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("holds the form while the request is in flight", async () => {
+    const gate = deferred<Response>();
+    fetchMock.mockReturnValue(gate.promise);
+
+    renderLogin("/login?next=%2Fcart");
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/^Email/), "ada@example.com");
+    const password = screen.getByLabelText(/^Password/);
+    await user.type(password, "correct horse");
+
+    const button = screen.getByRole("button", { name: "Sign in" });
+    await user.click(button);
+
+    expect(button.hasAttribute("disabled")).toBe(true);
+
+    await user.click(button);
+    await user.type(password, "{Enter}");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    gate.resolve(jsonResponse({ token: "jwt-value", user: USER }));
+
+    expect(await screen.findByText("the cart")).not.toBeNull();
+  });
+
+  it("submits from the keyboard when nothing is pending", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ token: "jwt-value", user: USER }),
+    );
+
+    renderLogin("/login?next=%2Fcart");
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/^Email/), "ada@example.com");
+    await user.type(screen.getByLabelText(/^Password/), "correct horse{Enter}");
+
+    expect(await screen.findByText("the cart")).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
