@@ -102,7 +102,7 @@ describe("ProductsPage", () => {
 
     expect(await screen.findByText("Gaming Laptop G15")).toBeTruthy();
     expect(screen.queryByText("Wireless Earbuds Pro")).toBeNull();
-    expect(screen.getByText("1 products")).toBeTruthy();
+    expect(screen.getByText("1 product")).toBeTruthy();
   });
 
   it("says so when nothing matches", async () => {
@@ -116,8 +116,6 @@ describe("ProductsPage", () => {
     );
 
     expect(await screen.findByText('No products match "zzz".')).toBeTruthy();
-    // The field's own clear button and the one in the empty state share a
-    // label, because they do the same thing.
     expect(
       screen.getAllByRole("button", { name: "Clear search" }),
     ).toHaveLength(2);

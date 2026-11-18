@@ -114,7 +114,7 @@ export function ProductsPage() {
         <>
           <Group justify="space-between">
             <Text size="sm" c="dimmed">
-              {data.length} products
+              {data.length} {data.length === 1 ? "product" : "products"}
             </Text>
           </Group>
 
