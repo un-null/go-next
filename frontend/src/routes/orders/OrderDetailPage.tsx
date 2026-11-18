@@ -19,14 +19,9 @@ import { ApiError } from "../../api/client";
 import { orderQuery } from "../../api/queries";
 import type { OrderItem } from "../../api/types";
 import { formatDate, formatPrice } from "../../lib/format";
+import { STATUS_COLOR } from "../../lib/orderStatus";
 import { type Session, useSession } from "../../lib/session";
 import { useSlowHint } from "../../lib/useSlowHint";
-
-const STATUS_COLOR = {
-  completed: "teal",
-  pending: "yellow",
-  cancelled: "gray",
-} as const;
 
 export function OrderDetailPage() {
   const { id } = useParams();
@@ -52,8 +47,6 @@ function OrderDetail({
   );
   const isSlow = useSlowHint(isPending);
 
-  // A 404 means the order is not this shopper's, or it never existed. Both
-  // read the same, and neither is worth a retry button.
   if (isError && error instanceof ApiError && error.status === 404) {
     return <OrderNotFound />;
   }
@@ -66,8 +59,8 @@ function OrderDetail({
 
       {isSlow && (
         <Alert color="yellow" variant="light" title="Waking the API up">
-          The free instance sleeps after fifteen minutes. This can take about
-          twenty seconds.
+          The free instance (Render) sleeps after fifteen minutes. The first
+          request can take about 20 sec. It is working, not broken.
         </Alert>
       )}
 

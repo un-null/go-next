@@ -27,8 +27,20 @@ const USER: User = {
   updated_at: "2026-11-01T00:00:00Z",
 };
 
-function serve(user: User = USER) {
-  fetchMock.mockResolvedValue(jsonResponse(user));
+function serve(user: User = USER, cartCount = 0) {
+  fetchMock.mockImplementation((input) => {
+    const url = new URL(String(input));
+    if (url.pathname === "/api/cart") {
+      return Promise.resolve(
+        jsonResponse({
+          items: [],
+          total_items: cartCount,
+          success: true,
+        }),
+      );
+    }
+    return Promise.resolve(jsonResponse(user));
+  });
 }
 
 beforeEach(() => {
@@ -120,5 +132,15 @@ describe("AppLayout", () => {
       { timeout: 8000 },
     );
     expect(item.getAttribute("href")).toBe("/account");
+  });
+
+  it("shows how many lines are in the cart", async () => {
+    serve(USER, 3);
+    setSession({ token: "jwt-value", user: USER });
+    renderLayout();
+
+    const link = await screen.findByRole("link", { name: "Cart, 3 items" });
+    expect(link.getAttribute("href")).toBe("/cart");
+    expect(screen.queryByRole("link", { name: "Cart" })).toBeNull();
   });
 });

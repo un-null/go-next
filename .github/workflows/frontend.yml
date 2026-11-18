@@ -2,13 +2,11 @@ name: frontend
 
 on:
   push:
+    branches: [master]
     paths:
       - "frontend/**"
       - ".github/workflows/frontend.yml"
   pull_request:
-    paths:
-      - "frontend/**"
-      - ".github/workflows/frontend.yml"
 
 concurrency:
   group: frontend-${{ github.ref }}

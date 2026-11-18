@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"backend/internal/entity"
 	"backend/internal/usecase"
 
 	"github.com/labstack/echo/v4"
@@ -26,23 +27,31 @@ func (h *ProductHandler) GetProducts(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	q := c.QueryParam("q")
+	page := positiveNumber(c.QueryParam("page"), 1)
+	limit := positiveNumber(c.QueryParam("limit"), 10)
 
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page < 1 {
-		page = 1
+	category := positiveNumber(c.QueryParam("category"), 0)
+
+	var products []entity.Product
+	var err error
+	if category > 0 {
+		products, err = h.productUseCase.GetProductsByCategory(ctx, category, q, page, limit)
+	} else {
+		products, err = h.productUseCase.GetAllProducts(ctx, q, page, limit)
 	}
-
-	limit, err := strconv.Atoi(c.QueryParam("limit"))
-	if err != nil || limit < 1 {
-		limit = 10
-	}
-
-	products, err := h.productUseCase.GetAllProducts(ctx, q, page, limit)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
 	return c.JSON(http.StatusOK, products)
+}
+
+func positiveNumber(raw string, fallback int) int {
+	value, err := strconv.Atoi(raw)
+	if err != nil || value < 1 {
+		return fallback
+	}
+	return value
 }
 
 func (h *ProductHandler) GetProductByID(c echo.Context) error {

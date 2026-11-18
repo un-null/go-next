@@ -3,11 +3,10 @@ import { Link } from "react-router";
 
 import type { Product } from "../../api/types";
 import { formatPrice, thumbnailUrl } from "../../lib/format";
+import { placeholder } from "../../lib/placeholder";
 import classes from "./ProductCard.module.css";
 
-const PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#e9ecef"/></svg>',
-)}`;
+const PLACEHOLDER = placeholder(600, 400);
 
 interface ProductCardProps {
   product: Product;

@@ -1,21 +1,23 @@
 import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { getCart } from "./cart";
-import { getProduct, listProducts } from "./catalog";
+import { getProduct, listCategories, listProducts } from "./catalog";
 import { listTransactions } from "./coins";
 import { getOrder, listOrders } from "./orders";
 import { getUser } from "./users";
 
 export const productKeys = {
   all: ["products"] as const,
-  list: (q = "") => [...productKeys.all, "list", q] as const,
+  list: (q = "", category: number | null = null) =>
+    [...productKeys.all, "list", q, category] as const,
   detail: (id: number) => [...productKeys.all, "detail", id] as const,
 };
 
-export const productsQuery = (q = "") =>
+export const productsQuery = (q = "", category: number | null = null) =>
   queryOptions({
-    queryKey: productKeys.list(q),
-    queryFn: () => listProducts({ limit: 100, q }),
+    queryKey: productKeys.list(q, category),
+    queryFn: () =>
+      listProducts({ limit: 100, q, category: category ?? undefined }),
     placeholderData: keepPreviousData,
   });
 
@@ -23,6 +25,16 @@ export const productQuery = (id: number) =>
   queryOptions({
     queryKey: productKeys.detail(id),
     queryFn: () => getProduct(id),
+  });
+
+export const categoryKeys = {
+  all: ["categories"] as const,
+};
+
+export const categoriesQuery = () =>
+  queryOptions({
+    queryKey: categoryKeys.all,
+    queryFn: listCategories,
   });
 
 export const cartKeys = {

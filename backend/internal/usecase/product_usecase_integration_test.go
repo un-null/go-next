@@ -57,3 +57,27 @@ func TestSearchProductsByKeyword(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, found)
 }
+
+func TestListProductsByCategory(t *testing.T) {
+	pool := setupIntegrationDB(t)
+	queries := database.New(pool)
+	products := NewProductUseCase(repository.NewProductRepository(queries))
+
+	ctx := context.Background()
+
+	found, err := products.GetProductsByCategory(ctx, 1, "", 1, 100)
+	require.NoError(t, err)
+	require.Len(t, found, 7)
+	for _, product := range found {
+		require.Equal(t, 1, product.CategoryID)
+	}
+
+	found, err = products.GetProductsByCategory(ctx, 1, "laptop", 1, 100)
+	require.NoError(t, err)
+	require.Len(t, found, 1)
+	require.Equal(t, "Gaming Laptop G15", found[0].Name)
+
+	found, err = products.GetProductsByCategory(ctx, 2, "laptop", 1, 100)
+	require.NoError(t, err)
+	require.Empty(t, found)
+}

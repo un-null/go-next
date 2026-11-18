@@ -2,7 +2,9 @@ import {
   Alert,
   Button,
   CloseButton,
+  Flex,
   Group,
+  NativeSelect,
   SimpleGrid,
   Skeleton,
   Stack,
@@ -15,31 +17,54 @@ import { IconSearch } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 
-import { productsQuery } from "../../api/queries";
+import { categoriesQuery, productsQuery } from "../../api/queries";
 import { useSlowHint } from "../../lib/useSlowHint";
 import { ProductCard } from "./ProductCard";
 
 const SKELETONS = [0, 1, 2, 3, 4, 5];
 const DEBOUNCE_MS = 300;
 
+function positiveParam(raw: string | null): number | null {
+  const value = Number(raw);
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
+
 export function ProductsPage() {
   const [params, setParams] = useSearchParams();
   const q = params.get("q") ?? "";
+  const requested = positiveParam(params.get("category"));
+
+  const categories = useQuery(categoriesQuery());
+
+  const category = categories.data
+    ? requested !== null &&
+      categories.data.some((item) => item.id === requested)
+      ? requested
+      : null
+    : requested;
 
   const [debounced] = useDebouncedValue(q, DEBOUNCE_MS);
 
   const { data, isPending, isError, error, refetch, isFetching } = useQuery(
-    productsQuery(debounced),
+    productsQuery(debounced, category),
   );
   const isSlow = useSlowHint(isPending);
+  const isFiltered = Boolean(debounced) || category !== null;
 
-  function setQ(value: string) {
+  function setParam(key: string, value: string) {
     const next = new URLSearchParams(params);
     if (value) {
-      next.set("q", value);
+      next.set(key, value);
     } else {
-      next.delete("q");
+      next.delete(key);
     }
+    setParams(next, { replace: true });
+  }
+
+  function clearFilters() {
+    const next = new URLSearchParams(params);
+    next.delete("q");
+    next.delete("category");
     setParams(next, { replace: true });
   }
 
@@ -51,18 +76,38 @@ export function ProductsPage() {
         </Title>
       </div>
 
-      <TextInput
-        placeholder="Search products"
-        aria-label="Search products"
-        leftSection={<IconSearch size={16} stroke={1.5} />}
-        rightSection={
-          q ? (
-            <CloseButton aria-label="Clear search" onClick={() => setQ("")} />
-          ) : null
-        }
-        value={q}
-        onChange={(event) => setQ(event.currentTarget.value)}
-      />
+      <Flex gap="sm" direction={{ base: "column", sm: "row" }}>
+        <TextInput
+          style={{ flex: 1 }}
+          placeholder="Search products"
+          aria-label="Search products"
+          leftSection={<IconSearch size={16} stroke={1.5} />}
+          rightSection={
+            q ? (
+              <CloseButton
+                aria-label="Clear search"
+                onClick={() => setParam("q", "")}
+              />
+            ) : null
+          }
+          value={q}
+          onChange={(event) => setParam("q", event.currentTarget.value)}
+        />
+
+        <NativeSelect
+          aria-label="Category"
+          w={{ base: "100%", sm: 220 }}
+          data={[
+            { value: "", label: "All categories" },
+            ...(categories.data ?? []).map((item) => ({
+              value: String(item.id),
+              label: item.name,
+            })),
+          ]}
+          value={category === null ? "" : String(category)}
+          onChange={(event) => setParam("category", event.currentTarget.value)}
+        />
+      </Flex>
 
       {isSlow && (
         <Alert color="yellow" variant="light" title="Waking the API up">
@@ -100,11 +145,13 @@ export function ProductsPage() {
           <Text c="dimmed">
             {debounced
               ? `No products match "${debounced}".`
-              : "The catalogue is empty."}
+              : category !== null
+                ? "No products in this category."
+                : "The catalogue is empty."}
           </Text>
-          {debounced && (
-            <Button variant="default" size="xs" onClick={() => setQ("")}>
-              Clear search
+          {isFiltered && (
+            <Button variant="default" size="xs" onClick={clearFilters}>
+              Clear filters
             </Button>
           )}
         </Stack>
@@ -114,7 +161,7 @@ export function ProductsPage() {
         <>
           <Group justify="space-between">
             <Text size="sm" c="dimmed">
-              {data.length} products
+              {data.length} {data.length === 1 ? "product" : "products"}
             </Text>
           </Group>
 
